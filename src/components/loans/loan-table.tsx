@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/shared/data-table"
 import { Button } from "@/components/ui/button"
@@ -13,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, RefreshCw, FileDown } from "lucide-react"
+import { MoreHorizontal, Eye, RefreshCw, FileDown, Download } from "lucide-react"
 import { LoanStatusBadges } from "./loan-status-badge"
 import { LoanStatusDialog } from "./loan-status-dialog"
 import { LoanFilters } from "./loan-filters"
@@ -28,10 +29,13 @@ interface LoanTableProps {
 }
 
 export function LoanTable({ loans, hospitals }: LoanTableProps) {
+  const searchParams = useSearchParams()
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [selectedLoan, setSelectedLoan] = useState<LoanWithRelations | null>(
     null
   )
+
+  const exportUrl = `/api/loans/export${searchParams.toString() ? `?${searchParams.toString()}` : ""}`
 
   const columns: ColumnDef<LoanWithRelations>[] = [
     {
@@ -155,9 +159,18 @@ export function LoanTable({ loans, hospitals }: LoanTableProps) {
             Gestión de todos los préstamos registrados
           </p>
         </div>
-        <Link href="/prestamos/nuevo">
-          <Button>Nuevo Préstamo</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => window.open(exportUrl, "_blank")}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar CSV
+          </Button>
+          <Link href="/prestamos/nuevo">
+            <Button>Nuevo Préstamo</Button>
+          </Link>
+        </div>
       </div>
 
       <LoanFilters hospitals={hospitals} />

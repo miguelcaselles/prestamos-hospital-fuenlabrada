@@ -4,7 +4,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PendingTable } from "@/components/loans/pending-table"
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react"
 
-export default async function PendientesPage() {
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>
+}
+
+export default async function PendientesPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const defaultTab = params.tab === "que-devuelvan" ? "que-devuelvan" : "devolver"
   const [pendingReturn, pendingTheirReturn, hospitals] = await Promise.all([
     prisma.loan.findMany({
       where: { devuelto: false, type: "SOLICITADO" },
@@ -30,7 +36,7 @@ export default async function PendientesPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="devolver">
+      <Tabs defaultValue={defaultTab}>
         <TabsList className="grid w-full max-w-lg grid-cols-2">
           <TabsTrigger value="devolver" className="gap-2">
             <ArrowUpRight className="h-4 w-4" />

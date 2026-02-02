@@ -43,8 +43,8 @@ export function LoanFilters({ hospitals }: LoanFiltersProps) {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
-          placeholder="Buscar medicamento..."
-          className="pl-9 w-[200px]"
+          placeholder="Buscar referencia, hospital o medicamento..."
+          className="pl-9 w-[320px]"
           defaultValue={searchParams.get("search") ?? ""}
           onChange={(e) => {
             const value = e.target.value

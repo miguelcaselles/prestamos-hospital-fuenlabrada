@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/shared/data-table"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -24,19 +25,27 @@ export function MedicationTable({ medications }: MedicationTableProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [editingMedication, setEditingMedication] =
     useState<Medication | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [medicationToDelete, setMedicationToDelete] = useState<Medication | null>(null)
+  const [isDeleting, startDelete] = useTransition()
 
   const handleEdit = (medication: Medication) => {
     setEditingMedication(medication)
     setFormOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteMedication(id)
-      toast.success("Medicamento eliminado")
-    } catch {
-      toast.error("Error al eliminar el medicamento")
-    }
+  const handleDeleteConfirm = () => {
+    if (!medicationToDelete) return
+    startDelete(async () => {
+      try {
+        await deleteMedication(medicationToDelete.id)
+        toast.success("Medicamento eliminado")
+        setDeleteDialogOpen(false)
+        setMedicationToDelete(null)
+      } catch {
+        toast.error("Error al eliminar el medicamento")
+      }
+    })
   }
 
   const columns: ColumnDef<Medication>[] = [
@@ -93,7 +102,10 @@ export function MedicationTable({ medications }: MedicationTableProps) {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-red-600"
-                onClick={() => handleDelete(medication.id)}
+                onClick={() => {
+                  setMedicationToDelete(medication)
+                  setDeleteDialogOpen(true)
+                }}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Eliminar
@@ -139,6 +151,15 @@ export function MedicationTable({ medications }: MedicationTableProps) {
           if (!open) setEditingMedication(null)
         }}
         medication={editingMedication}
+      />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Eliminar medicamento"
+        description={`¿Estás seguro de que quieres eliminar "${medicationToDelete?.name}"? El medicamento se marcará como inactivo y no aparecerá en los listados.`}
+        loading={isDeleting}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   )

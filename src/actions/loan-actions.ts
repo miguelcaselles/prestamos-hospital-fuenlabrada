@@ -124,9 +124,11 @@ export async function getLoans(filters?: {
     where.hospitalId = filters.hospitalId
   }
   if (filters?.search) {
-    where.medication = {
-      name: { contains: filters.search, mode: "insensitive" },
-    }
+    where.OR = [
+      { referenceNumber: { contains: filters.search, mode: "insensitive" } },
+      { hospital: { name: { contains: filters.search, mode: "insensitive" } } },
+      { medication: { name: { contains: filters.search, mode: "insensitive" } } },
+    ]
   }
 
   return prisma.loan.findMany({

@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/shared/data-table"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -23,19 +24,27 @@ interface HospitalTableProps {
 export function HospitalTable({ hospitals }: HospitalTableProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [editingHospital, setEditingHospital] = useState<Hospital | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [hospitalToDelete, setHospitalToDelete] = useState<Hospital | null>(null)
+  const [isDeleting, startDelete] = useTransition()
 
   const handleEdit = (hospital: Hospital) => {
     setEditingHospital(hospital)
     setFormOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteHospital(id)
-      toast.success("Hospital eliminado")
-    } catch {
-      toast.error("Error al eliminar el hospital")
-    }
+  const handleDeleteConfirm = () => {
+    if (!hospitalToDelete) return
+    startDelete(async () => {
+      try {
+        await deleteHospital(hospitalToDelete.id)
+        toast.success("Hospital eliminado")
+        setDeleteDialogOpen(false)
+        setHospitalToDelete(null)
+      } catch {
+        toast.error("Error al eliminar el hospital")
+      }
+    })
   }
 
   const columns: ColumnDef<Hospital>[] = [
@@ -83,7 +92,10 @@ export function HospitalTable({ hospitals }: HospitalTableProps) {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-red-600"
-                onClick={() => handleDelete(hospital.id)}
+                onClick={() => {
+                  setHospitalToDelete(hospital)
+                  setDeleteDialogOpen(true)
+                }}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Eliminar
@@ -129,6 +141,15 @@ export function HospitalTable({ hospitals }: HospitalTableProps) {
           if (!open) setEditingHospital(null)
         }}
         hospital={editingHospital}
+      />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Eliminar hospital"
+        description={`¿Estás seguro de que quieres eliminar "${hospitalToDelete?.name}"? El hospital se marcará como inactivo y no aparecerá en los listados.`}
+        loading={isDeleting}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   )

@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
+import { CommandPalette } from "@/components/shared/command-palette"
 
 export const dynamic = "force-dynamic"
 
@@ -10,6 +11,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      <CommandPalette />
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:w-72 lg:flex-col">
         <Sidebar />
