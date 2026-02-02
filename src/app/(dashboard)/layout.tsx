@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { CommandPalette } from "@/components/shared/command-palette"
@@ -23,9 +24,7 @@ export default function DashboardLayout({
         <header className="flex h-16 items-center gap-4 border-b bg-white px-4 lg:hidden">
           <MobileNav />
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">
-              HF
-            </div>
+            <Image src="/logo.svg" alt="Logo" width={32} height={32} />
             <span className="text-sm font-semibold">Gestión de Préstamos</span>
           </div>
         </header>

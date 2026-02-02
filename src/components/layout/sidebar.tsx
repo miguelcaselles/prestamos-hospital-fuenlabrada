@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import Image from "next/image"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -11,6 +12,7 @@ import {
   Building2,
   Pill,
   Settings,
+  LogOut,
 } from "lucide-react"
 
 const navigation = [
@@ -53,16 +55,21 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <div className="flex h-full flex-col bg-white border-r">
       {/* Branding */}
-      <div className="flex h-16 items-center gap-3 border-b px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
-          HF
-        </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-gray-900">
+      <div className="flex h-16 items-center gap-3 border-b px-5">
+        <Image src="/logo.svg" alt="Logo" width={36} height={36} className="shrink-0" />
+        <div className="flex flex-col min-w-0">
+          <span className="text-sm font-semibold text-gray-900 truncate">
             H.U. Fuenlabrada
           </span>
           <span className="text-xs text-gray-500">Gestión de Préstamos</span>
@@ -99,9 +106,18 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t px-6 py-4">
-        <p className="text-xs text-gray-400">Servicio de Farmacia</p>
-        <p className="text-xs text-gray-400">v1.0.0</p>
+      <div className="border-t px-3 py-3 space-y-2">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          Cerrar sesión
+        </button>
+        <div className="px-3 pt-1">
+          <p className="text-xs text-gray-400">Servicio de Farmacia</p>
+          <p className="text-xs text-gray-400">v1.0.0</p>
+        </div>
       </div>
     </div>
   )

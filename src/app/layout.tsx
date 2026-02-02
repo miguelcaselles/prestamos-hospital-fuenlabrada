@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: "Gestión de Préstamos - H.U. Fuenlabrada",
   description:
     "Sistema de gestión de préstamos de medicamentos entre hospitales - Hospital Universitario de Fuenlabrada",
+  icons: {
+    icon: "/favicon.svg",
+  },
 }
 
 export default function RootLayout({
