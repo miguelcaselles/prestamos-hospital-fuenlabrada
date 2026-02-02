@@ -7,7 +7,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { LoanStatusDialog } from "./loan-status-dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   LOAN_TYPE_LABELS,
   getFarmatoolsLabel,
@@ -15,14 +19,13 @@ import {
   getDevolucionLabel,
   getDevolucionColor,
 } from "@/lib/constants"
-import { updateLoanNotes } from "@/actions/loan-actions"
+import { updateLoanNotes, toggleFarmatools, toggleDevuelto } from "@/actions/loan-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import {
   ArrowLeft,
   FileDown,
-  RefreshCw,
   Check,
   Save,
   Building2,
@@ -31,6 +34,7 @@ import {
   Calendar,
   Mail,
   X,
+  Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { LoanWithRelations } from "@/types"
@@ -40,9 +44,40 @@ interface LoanDetailProps {
 }
 
 export function LoanDetail({ loan }: LoanDetailProps) {
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [notes, setNotes] = useState(loan.notes || "")
   const [isSavingNotes, startSaveNotes] = useTransition()
+  const [optimisticFarmatools, setOptimisticFarmatools] = useState(loan.farmatoolsGestionado)
+  const [optimisticDevuelto, setOptimisticDevuelto] = useState(loan.devuelto)
+  const [isFarmatoolsPending, startFarmatoolsTransition] = useTransition()
+  const [isDevueltoPending, startDevueltoTransition] = useTransition()
+
+  const handleToggleFarmatools = () => {
+    const newValue = !optimisticFarmatools
+    setOptimisticFarmatools(newValue)
+    startFarmatoolsTransition(async () => {
+      try {
+        await toggleFarmatools(loan.id, newValue)
+        toast.success(getFarmatoolsLabel(newValue), { duration: 2000 })
+      } catch {
+        setOptimisticFarmatools(!newValue)
+        toast.error("Error al actualizar")
+      }
+    })
+  }
+
+  const handleToggleDevuelto = () => {
+    const newValue = !optimisticDevuelto
+    setOptimisticDevuelto(newValue)
+    startDevueltoTransition(async () => {
+      try {
+        await toggleDevuelto(loan.id, newValue)
+        toast.success(getDevolucionLabel(newValue, loan.type), { duration: 2000 })
+      } catch {
+        setOptimisticDevuelto(!newValue)
+        toast.error("Error al actualizar")
+      }
+    })
+  }
 
   const handleSaveNotes = () => {
     startSaveNotes(async () => {
@@ -90,13 +125,6 @@ export function LoanDetail({ loan }: LoanDetailProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setStatusDialogOpen(true)}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Cambiar Estado
-          </Button>
           <Link href={`/api/pdf/${loan.id}`} target="_blank">
             <Button variant="outline">
               <FileDown className="mr-2 h-4 w-4" />
@@ -106,77 +134,117 @@ export function LoanDetail({ loan }: LoanDetailProps) {
         </div>
       </div>
 
-      {/* Status Cards - Two Independent Dimensions */}
+      {/* Status Cards - Clickable Toggle */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">
-                  Farmatools
-                </p>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-sm px-3 py-1",
-                    getFarmatoolsColor(loan.farmatoolsGestionado)
-                  )}
-                >
-                  {getFarmatoolsLabel(loan.farmatoolsGestionado)}
-                </Badge>
-              </div>
-              <div
-                className={cn(
-                  "flex h-12 w-12 items-center justify-center rounded-full",
-                  loan.farmatoolsGestionado
-                    ? "bg-blue-100 text-blue-600"
-                    : "bg-yellow-100 text-yellow-600"
-                )}
-              >
-                {loan.farmatoolsGestionado ? (
-                  <Check className="h-6 w-6" />
-                ) : (
-                  <X className="h-6 w-6" />
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card
+              className={cn(
+                "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
+                isFarmatoolsPending && "opacity-70"
+              )}
+              onClick={handleToggleFarmatools}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-2">
+                      Farmatools
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-sm px-3 py-1 transition-colors duration-200",
+                        getFarmatoolsColor(optimisticFarmatools)
+                      )}
+                    >
+                      {isFarmatoolsPending && (
+                        <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                      )}
+                      {getFarmatoolsLabel(optimisticFarmatools)}
+                    </Badge>
+                  </div>
+                  <div
+                    className={cn(
+                      "flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-200",
+                      optimisticFarmatools
+                        ? "bg-blue-100 text-blue-600"
+                        : "bg-yellow-100 text-yellow-600"
+                    )}
+                  >
+                    {optimisticFarmatools ? (
+                      <Check className="h-6 w-6" />
+                    ) : (
+                      <X className="h-6 w-6" />
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              {optimisticFarmatools
+                ? "Click: marcar como pendiente de gestionar"
+                : "Click: marcar como gestionado"}
+            </p>
+          </TooltipContent>
+        </Tooltip>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">
-                  Devolución
-                </p>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-sm px-3 py-1",
-                    getDevolucionColor(loan.devuelto)
-                  )}
-                >
-                  {getDevolucionLabel(loan.devuelto, loan.type)}
-                </Badge>
-              </div>
-              <div
-                className={cn(
-                  "flex h-12 w-12 items-center justify-center rounded-full",
-                  loan.devuelto
-                    ? "bg-green-100 text-green-600"
-                    : "bg-orange-100 text-orange-600"
-                )}
-              >
-                {loan.devuelto ? (
-                  <Check className="h-6 w-6" />
-                ) : (
-                  <X className="h-6 w-6" />
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card
+              className={cn(
+                "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
+                isDevueltoPending && "opacity-70"
+              )}
+              onClick={handleToggleDevuelto}
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-2">
+                      Devolución
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-sm px-3 py-1 transition-colors duration-200",
+                        getDevolucionColor(optimisticDevuelto)
+                      )}
+                    >
+                      {isDevueltoPending && (
+                        <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                      )}
+                      {getDevolucionLabel(optimisticDevuelto, loan.type)}
+                    </Badge>
+                  </div>
+                  <div
+                    className={cn(
+                      "flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-200",
+                      optimisticDevuelto
+                        ? "bg-green-100 text-green-600"
+                        : "bg-orange-100 text-orange-600"
+                    )}
+                  >
+                    {optimisticDevuelto ? (
+                      <Check className="h-6 w-6" />
+                    ) : (
+                      <X className="h-6 w-6" />
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              {optimisticDevuelto
+                ? "Click: marcar como pendiente"
+                : "Click: marcar como devuelto"}
+            </p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Details */}
@@ -299,14 +367,6 @@ export function LoanDetail({ loan }: LoanDetailProps) {
         </CardContent>
       </Card>
 
-      <LoanStatusDialog
-        open={statusDialogOpen}
-        onOpenChange={setStatusDialogOpen}
-        loanId={loan.id}
-        farmatoolsGestionado={loan.farmatoolsGestionado}
-        devuelto={loan.devuelto}
-        loanType={loan.type}
-      />
     </div>
   )
 }

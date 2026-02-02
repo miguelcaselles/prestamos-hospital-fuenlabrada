@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ColumnDef } from "@tanstack/react-table"
@@ -14,9 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, RefreshCw, FileDown, Download } from "lucide-react"
-import { LoanStatusBadges } from "./loan-status-badge"
-import { LoanStatusDialog } from "./loan-status-dialog"
+import { MoreHorizontal, Eye, FileDown, Download } from "lucide-react"
+import { ToggleableStatusBadges } from "./toggleable-status-badges"
 import { LoanFilters } from "./loan-filters"
 import { LOAN_TYPE_LABELS } from "@/lib/constants"
 import { format } from "date-fns"
@@ -30,10 +28,6 @@ interface LoanTableProps {
 
 export function LoanTable({ loans, hospitals }: LoanTableProps) {
   const searchParams = useSearchParams()
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
-  const [selectedLoan, setSelectedLoan] = useState<LoanWithRelations | null>(
-    null
-  )
 
   const exportUrl = `/api/loans/export${searchParams.toString() ? `?${searchParams.toString()}` : ""}`
 
@@ -98,7 +92,8 @@ export function LoanTable({ loans, hospitals }: LoanTableProps) {
       id: "status",
       header: "Estado",
       cell: ({ row }) => (
-        <LoanStatusBadges
+        <ToggleableStatusBadges
+          loanId={row.original.id}
           farmatoolsGestionado={row.original.farmatoolsGestionado}
           devuelto={row.original.devuelto}
           loanType={row.original.type}
@@ -123,15 +118,6 @@ export function LoanTable({ loans, hospitals }: LoanTableProps) {
                   <Eye className="mr-2 h-4 w-4" />
                   Ver detalle
                 </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setSelectedLoan(loan)
-                  setStatusDialogOpen(true)
-                }}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Cambiar estado
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
@@ -176,17 +162,6 @@ export function LoanTable({ loans, hospitals }: LoanTableProps) {
       <LoanFilters hospitals={hospitals} />
 
       <DataTable columns={columns} data={loans} />
-
-      {selectedLoan && (
-        <LoanStatusDialog
-          open={statusDialogOpen}
-          onOpenChange={setStatusDialogOpen}
-          loanId={selectedLoan.id}
-          farmatoolsGestionado={selectedLoan.farmatoolsGestionado}
-          devuelto={selectedLoan.devuelto}
-          loanType={selectedLoan.type}
-        />
-      )}
     </div>
   )
 }
