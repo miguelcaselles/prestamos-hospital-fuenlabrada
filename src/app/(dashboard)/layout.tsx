@@ -1,0 +1,38 @@
+import { Sidebar } from "@/components/layout/sidebar"
+import { MobileNav } from "@/components/layout/mobile-nav"
+
+export const dynamic = "force-dynamic"
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:w-72 lg:flex-col">
+        <Sidebar />
+      </aside>
+
+      {/* Main content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Mobile header */}
+        <header className="flex h-16 items-center gap-4 border-b bg-white px-4 lg:hidden">
+          <MobileNav />
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">
+              HF
+            </div>
+            <span className="text-sm font-semibold">Gestión de Préstamos</span>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
+}

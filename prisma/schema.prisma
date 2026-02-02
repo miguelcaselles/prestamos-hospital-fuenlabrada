@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LoanType {
+  SOLICITADO
+  PRESTADO
+}
+
+enum LoanStatus {
+  PENDIENTE_FARMATOOLS
+  GESTIONADO_FARMATOOLS
+  PENDIENTE_DEVOLUCION
+  DEVUELTO
+}
+
+model Hospital {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  address   String?
+  phone     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  loans     Loan[]
+
+  @@map("hospitals")
+}
+
+model Medication {
+  id               String   @id @default(cuid())
+  name             String
+  nationalCode     String?  @map("national_code")
+  presentation     String?
+  activeIngredient String?  @map("active_ingredient")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  loans            Loan[]
+
+  @@map("medications")
+}
+
+model Loan {
+  id              String     @id @default(cuid())
+  referenceNumber String     @unique @map("reference_number")
+  type            LoanType
+  hospitalId      String     @map("hospital_id")
+  hospital        Hospital   @relation(fields: [hospitalId], references: [id])
+  medicationId    String     @map("medication_id")
+  medication      Medication @relation(fields: [medicationId], references: [id])
+  units           Int
+  status          LoanStatus @default(PENDIENTE_FARMATOOLS)
+  emailSentTo     String?    @map("email_sent_to")
+  pdfUrl          String?    @map("pdf_url")
+  notes           String?
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  @@index([hospitalId])
+  @@index([medicationId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("loans")
+}
+
+model SmtpSettings {
+  id        String @id @default("default")
+  host      String
+  port      Int
+  secure    Boolean @default(false)
+  user      String
+  password  String
+  fromName  String  @map("from_name")
+  fromEmail String  @map("from_email")
+
+  @@map("smtp_settings")
+}
+
+model ReferenceCounter {
+  id      String @id @default("loan_counter")
+  year    Int
+  counter Int    @default(0)
+
+  @@map("reference_counters")
+}
