@@ -55,7 +55,7 @@ export default async function PendientesPage({ searchParams }: PageProps) {
               <p className="text-sm mt-1">Todos los préstamos solicitados están al día.</p>
             </div>
           ) : (
-            <PendingTable loans={pendingReturn} hospitals={hospitals} />
+            <PendingTable loans={pendingReturn} hospitals={hospitals} listType="devolver" />
           )}
         </TabsContent>
         <TabsContent value="que-devuelvan" className="mt-4">
@@ -66,7 +66,7 @@ export default async function PendientesPage({ searchParams }: PageProps) {
               <p className="text-sm mt-1">Todos los préstamos realizados han sido devueltos.</p>
             </div>
           ) : (
-            <PendingTable loans={pendingTheirReturn} hospitals={hospitals} />
+            <PendingTable loans={pendingTheirReturn} hospitals={hospitals} listType="que-devuelvan" />
           )}
         </TabsContent>
       </Tabs>

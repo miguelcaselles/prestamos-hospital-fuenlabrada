@@ -17,17 +17,19 @@ import { bulkMarkReturned } from "@/actions/loan-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, FileDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { LoanWithRelations, Hospital } from "@/types"
 
 interface PendingTableProps {
   loans: LoanWithRelations[]
   hospitals: Hospital[]
+  listType: "devolver" | "que-devuelvan"
 }
 
-export function PendingTable({ loans, hospitals }: PendingTableProps) {
+export function PendingTable({ loans, hospitals, listType }: PendingTableProps) {
   const [isPending, startTransition] = useTransition()
+  const [isDownloading, setIsDownloading] = useState(false)
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>("all")
   const [selectedLoanIds, setSelectedLoanIds] = useState<string[]>([])
 
@@ -35,6 +37,37 @@ export function PendingTable({ loans, hospitals }: PendingTableProps) {
     selectedHospitalId === "all"
       ? loans
       : loans.filter((l) => l.hospitalId === selectedHospitalId)
+
+  const handleDownloadPDF = async () => {
+    const idsToDownload = selectedLoanIds.length > 0 ? selectedLoanIds : filteredLoans.map((l) => l.id)
+    if (idsToDownload.length === 0) {
+      toast.warning("No hay préstamos para descargar")
+      return
+    }
+
+    setIsDownloading(true)
+    try {
+      const response = await fetch("/api/pdf/pendientes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ loanIds: idsToDownload, listType }),
+      })
+
+      if (!response.ok) throw new Error("Error al generar PDF")
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `pendientes-${listType}-${new Date().toISOString().slice(0, 10)}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error("Error al descargar el PDF")
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   const handleBulkMarkReturned = () => {
     if (selectedLoanIds.length === 0) {
@@ -165,6 +198,19 @@ export function PendingTable({ loans, hospitals }: PendingTableProps) {
             ))}
           </SelectContent>
         </Select>
+
+        <Button
+          variant="outline"
+          onClick={handleDownloadPDF}
+          disabled={isDownloading}
+        >
+          <FileDown className="mr-2 h-4 w-4" />
+          {isDownloading
+            ? "Generando..."
+            : selectedLoanIds.length > 0
+              ? `Descargar PDF (${selectedLoanIds.length})`
+              : "Descargar PDF (todos)"}
+        </Button>
 
         {selectedLoanIds.length > 0 && (
           <Button
