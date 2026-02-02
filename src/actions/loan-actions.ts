@@ -7,7 +7,6 @@ import { sendLoanEmail } from "@/lib/email"
 import { loanFormSchema, LoanFormValues } from "@/lib/validators"
 import { LOAN_TYPE_LABELS } from "@/lib/constants"
 import { revalidatePath } from "next/cache"
-import type { LoanStatus } from "@/types"
 
 export async function createLoan(data: LoanFormValues) {
   const validated = loanFormSchema.parse(data)
@@ -51,10 +50,23 @@ export async function createLoan(data: LoanFormValues) {
   return { success: true, referenceNumber: loan.referenceNumber, id: loan.id }
 }
 
-export async function updateLoanStatus(id: string, status: LoanStatus) {
+export async function toggleFarmatools(id: string, gestionado: boolean) {
   const loan = await prisma.loan.update({
     where: { id },
-    data: { status },
+    data: { farmatoolsGestionado: gestionado },
+  })
+
+  revalidatePath("/prestamos")
+  revalidatePath("/dashboard")
+  revalidatePath(`/prestamos/${id}`)
+
+  return loan
+}
+
+export async function toggleDevuelto(id: string, devuelto: boolean) {
+  const loan = await prisma.loan.update({
+    where: { id },
+    data: { devuelto },
   })
 
   revalidatePath("/prestamos")
@@ -63,6 +75,17 @@ export async function updateLoanStatus(id: string, status: LoanStatus) {
   revalidatePath(`/prestamos/${id}`)
 
   return loan
+}
+
+export async function bulkMarkReturned(loanIds: string[]) {
+  await prisma.loan.updateMany({
+    where: { id: { in: loanIds } },
+    data: { devuelto: true },
+  })
+
+  revalidatePath("/prestamos")
+  revalidatePath("/dashboard")
+  revalidatePath("/pendientes")
 }
 
 export async function updateLoanNotes(id: string, notes: string) {
@@ -75,27 +98,24 @@ export async function updateLoanNotes(id: string, notes: string) {
   return loan
 }
 
-export async function bulkUpdateStatus(loanIds: string[], status: LoanStatus) {
-  await prisma.loan.updateMany({
-    where: { id: { in: loanIds } },
-    data: { status },
-  })
-
-  revalidatePath("/prestamos")
-  revalidatePath("/dashboard")
-  revalidatePath("/pendientes")
-}
-
 export async function getLoans(filters?: {
-  status?: string
+  farmatools?: string
+  devuelto?: string
   type?: string
   hospitalId?: string
   search?: string
 }) {
   const where: Record<string, unknown> = {}
 
-  if (filters?.status) {
-    where.status = filters.status
+  if (filters?.farmatools === "true") {
+    where.farmatoolsGestionado = true
+  } else if (filters?.farmatools === "false") {
+    where.farmatoolsGestionado = false
+  }
+  if (filters?.devuelto === "true") {
+    where.devuelto = true
+  } else if (filters?.devuelto === "false") {
+    where.devuelto = false
   }
   if (filters?.type) {
     where.type = filters.type

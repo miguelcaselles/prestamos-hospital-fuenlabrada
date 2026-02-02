@@ -7,12 +7,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { LoanStatusBadge } from "./loan-status-badge"
 import { LoanStatusDialog } from "./loan-status-dialog"
 import {
   LOAN_TYPE_LABELS,
-  LOAN_STATUS_LABELS,
-  getPendingReturnLabel,
+  getFarmatoolsLabel,
+  getFarmatoolsColor,
+  getDevolucionLabel,
+  getDevolucionColor,
 } from "@/lib/constants"
 import { updateLoanNotes } from "@/actions/loan-actions"
 import { toast } from "sonner"
@@ -29,16 +30,10 @@ import {
   Hash,
   Calendar,
   Mail,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { LoanWithRelations } from "@/types"
-
-const ALL_STATUSES = [
-  "PENDIENTE_FARMATOOLS",
-  "GESTIONADO_FARMATOOLS",
-  "PENDIENTE_DEVOLUCION",
-  "DEVUELTO",
-] as const
 
 interface LoanDetailProps {
   loan: LoanWithRelations
@@ -48,8 +43,6 @@ export function LoanDetail({ loan }: LoanDetailProps) {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [notes, setNotes] = useState(loan.notes || "")
   const [isSavingNotes, startSaveNotes] = useTransition()
-
-  const currentStatusIndex = ALL_STATUSES.indexOf(loan.status)
 
   const handleSaveNotes = () => {
     startSaveNotes(async () => {
@@ -113,69 +106,78 @@ export function LoanDetail({ loan }: LoanDetailProps) {
         </div>
       </div>
 
-      {/* Status Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Estado del Préstamo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            {ALL_STATUSES.map((status, index) => {
-              const isActive = index <= currentStatusIndex
-              const isCurrent = index === currentStatusIndex
-              const label =
-                status === "PENDIENTE_DEVOLUCION"
-                  ? getPendingReturnLabel(loan.type)
-                  : LOAN_STATUS_LABELS[status]
-
-              return (
-                <div key={status} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
-                        isCurrent
-                          ? "border-blue-500 bg-blue-500 text-white"
-                          : isActive
-                            ? "border-green-500 bg-green-500 text-white"
-                            : "border-gray-300 bg-white text-gray-400"
-                      )}
-                    >
-                      {isActive && !isCurrent ? (
-                        <Check className="h-5 w-5" />
-                      ) : (
-                        <span className="text-sm font-bold">{index + 1}</span>
-                      )}
-                    </div>
-                    <p
-                      className={cn(
-                        "mt-2 text-center text-xs max-w-[120px]",
-                        isCurrent
-                          ? "font-semibold text-blue-700"
-                          : isActive
-                            ? "text-green-700"
-                            : "text-gray-400"
-                      )}
-                    >
-                      {label}
-                    </p>
-                  </div>
-                  {index < ALL_STATUSES.length - 1 && (
-                    <div
-                      className={cn(
-                        "h-0.5 flex-1 mx-2",
-                        index < currentStatusIndex
-                          ? "bg-green-500"
-                          : "bg-gray-200"
-                      )}
-                    />
+      {/* Status Cards - Two Independent Dimensions */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-2">
+                  Farmatools
+                </p>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-sm px-3 py-1",
+                    getFarmatoolsColor(loan.farmatoolsGestionado)
                   )}
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                >
+                  {getFarmatoolsLabel(loan.farmatoolsGestionado)}
+                </Badge>
+              </div>
+              <div
+                className={cn(
+                  "flex h-12 w-12 items-center justify-center rounded-full",
+                  loan.farmatoolsGestionado
+                    ? "bg-blue-100 text-blue-600"
+                    : "bg-yellow-100 text-yellow-600"
+                )}
+              >
+                {loan.farmatoolsGestionado ? (
+                  <Check className="h-6 w-6" />
+                ) : (
+                  <X className="h-6 w-6" />
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-2">
+                  Devolución
+                </p>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-sm px-3 py-1",
+                    getDevolucionColor(loan.devuelto)
+                  )}
+                >
+                  {getDevolucionLabel(loan.devuelto, loan.type)}
+                </Badge>
+              </div>
+              <div
+                className={cn(
+                  "flex h-12 w-12 items-center justify-center rounded-full",
+                  loan.devuelto
+                    ? "bg-green-100 text-green-600"
+                    : "bg-orange-100 text-orange-600"
+                )}
+              >
+                {loan.devuelto ? (
+                  <Check className="h-6 w-6" />
+                ) : (
+                  <X className="h-6 w-6" />
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Details */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -266,10 +268,6 @@ export function LoanDetail({ loan }: LoanDetailProps) {
                 <p>{loan.emailSentTo || "No enviado"}</p>
               </div>
             </div>
-            <Separator />
-            <div className="flex items-start gap-3">
-              <LoanStatusBadge status={loan.status} loanType={loan.type} />
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -305,7 +303,8 @@ export function LoanDetail({ loan }: LoanDetailProps) {
         open={statusDialogOpen}
         onOpenChange={setStatusDialogOpen}
         loanId={loan.id}
-        currentStatus={loan.status}
+        farmatoolsGestionado={loan.farmatoolsGestionado}
+        devuelto={loan.devuelto}
         loanType={loan.type}
       />
     </div>

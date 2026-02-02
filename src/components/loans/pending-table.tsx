@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { LoanStatusBadge } from "./loan-status-badge"
-import { bulkUpdateStatus } from "@/actions/loan-actions"
+import { LoanStatusBadges } from "./loan-status-badge"
+import { bulkMarkReturned } from "@/actions/loan-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -44,7 +44,7 @@ export function PendingTable({ loans, hospitals }: PendingTableProps) {
 
     startTransition(async () => {
       try {
-        await bulkUpdateStatus(selectedLoanIds, "DEVUELTO")
+        await bulkMarkReturned(selectedLoanIds)
         toast.success(
           `${selectedLoanIds.length} préstamo(s) marcado(s) como devuelto(s)`
         )
@@ -131,11 +131,12 @@ export function PendingTable({ loans, hospitals }: PendingTableProps) {
       ),
     },
     {
-      accessorKey: "status",
+      id: "status",
       header: "Estado",
       cell: ({ row }) => (
-        <LoanStatusBadge
-          status={row.original.status}
+        <LoanStatusBadges
+          farmatoolsGestionado={row.original.farmatoolsGestionado}
+          devuelto={row.original.devuelto}
           loanType={row.original.type}
         />
       ),

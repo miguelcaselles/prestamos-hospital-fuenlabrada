@@ -1,25 +1,31 @@
 import { Badge } from "@/components/ui/badge"
 import {
-  LOAN_STATUS_LABELS,
-  LOAN_STATUS_COLORS,
-  getPendingReturnLabel,
+  getFarmatoolsLabel,
+  getFarmatoolsColor,
+  getDevolucionLabel,
+  getDevolucionColor,
 } from "@/lib/constants"
-import type { LoanStatus, LoanType } from "@/types"
+import type { LoanType } from "@/types"
 
-interface LoanStatusBadgeProps {
-  status: LoanStatus
-  loanType?: LoanType
+interface LoanStatusBadgesProps {
+  farmatoolsGestionado: boolean
+  devuelto: boolean
+  loanType: LoanType
 }
 
-export function LoanStatusBadge({ status, loanType }: LoanStatusBadgeProps) {
-  const label =
-    status === "PENDIENTE_DEVOLUCION" && loanType
-      ? getPendingReturnLabel(loanType)
-      : LOAN_STATUS_LABELS[status]
-
+export function LoanStatusBadges({
+  farmatoolsGestionado,
+  devuelto,
+  loanType,
+}: LoanStatusBadgesProps) {
   return (
-    <Badge variant="outline" className={LOAN_STATUS_COLORS[status]}>
-      {label}
-    </Badge>
+    <div className="flex flex-wrap gap-1.5">
+      <Badge variant="outline" className={getFarmatoolsColor(farmatoolsGestionado)}>
+        {getFarmatoolsLabel(farmatoolsGestionado)}
+      </Badge>
+      <Badge variant="outline" className={getDevolucionColor(devuelto)}>
+        {getDevolucionLabel(devuelto, loanType)}
+      </Badge>
+    </div>
   )
 }

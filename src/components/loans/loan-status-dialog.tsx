@@ -8,19 +8,23 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { LoanStatusBadge } from "./loan-status-badge"
-import { STATUS_TRANSITIONS, LOAN_STATUS_LABELS } from "@/lib/constants"
-import { updateLoanStatus } from "@/actions/loan-actions"
+import { LoanStatusBadges } from "./loan-status-badge"
+import {
+  getFarmatoolsLabel,
+  getDevolucionLabel,
+} from "@/lib/constants"
+import { toggleFarmatools, toggleDevuelto } from "@/actions/loan-actions"
 import { toast } from "sonner"
 import { useTransition } from "react"
-import { ArrowRight } from "lucide-react"
-import type { LoanStatus, LoanType } from "@/types"
+import { ClipboardCheck, PackageCheck } from "lucide-react"
+import type { LoanType } from "@/types"
 
 interface LoanStatusDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   loanId: string
-  currentStatus: LoanStatus
+  farmatoolsGestionado: boolean
+  devuelto: boolean
   loanType: LoanType
 }
 
@@ -28,17 +32,33 @@ export function LoanStatusDialog({
   open,
   onOpenChange,
   loanId,
-  currentStatus,
+  farmatoolsGestionado,
+  devuelto,
   loanType,
 }: LoanStatusDialogProps) {
   const [isPending, startTransition] = useTransition()
-  const nextStatuses = STATUS_TRANSITIONS[currentStatus] || []
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleToggleFarmatools = () => {
     startTransition(async () => {
       try {
-        await updateLoanStatus(loanId, newStatus as LoanStatus)
-        toast.success("Estado actualizado correctamente")
+        await toggleFarmatools(loanId, !farmatoolsGestionado)
+        toast.success(
+          `Marcado como: ${getFarmatoolsLabel(!farmatoolsGestionado)}`
+        )
+        onOpenChange(false)
+      } catch {
+        toast.error("Error al actualizar el estado")
+      }
+    })
+  }
+
+  const handleToggleDevuelto = () => {
+    startTransition(async () => {
+      try {
+        await toggleDevuelto(loanId, !devuelto)
+        toast.success(
+          `Marcado como: ${getDevolucionLabel(!devuelto, loanType)}`
+        )
         onOpenChange(false)
       } catch {
         toast.error("Error al actualizar el estado")
@@ -48,42 +68,50 @@ export function LoanStatusDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle>Cambiar Estado</DialogTitle>
           <DialogDescription>
-            Selecciona el nuevo estado para este préstamo.
+            Gestiona los estados de este préstamo de forma independiente.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center gap-2">
+        <div className="space-y-5 pt-2">
+          <div>
             <span className="text-sm text-gray-500">Estado actual:</span>
-            <LoanStatusBadge status={currentStatus} loanType={loanType} />
+            <div className="mt-2">
+              <LoanStatusBadges
+                farmatoolsGestionado={farmatoolsGestionado}
+                devuelto={devuelto}
+                loanType={loanType}
+              />
+            </div>
           </div>
 
-          {nextStatuses.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              Este préstamo ya está en su estado final.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500">Avanzar a:</p>
-              {nextStatuses.map((status) => (
-                <Button
-                  key={status}
-                  variant="outline"
-                  className="w-full justify-between"
-                  disabled={isPending}
-                  onClick={() => handleStatusChange(status)}
-                >
-                  <span>
-                    {LOAN_STATUS_LABELS[status as keyof typeof LOAN_STATUS_LABELS]}
-                  </span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              ))}
-            </div>
-          )}
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3"
+              disabled={isPending}
+              onClick={handleToggleFarmatools}
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              {farmatoolsGestionado
+                ? "Marcar como NO gestionado en Farmatools"
+                : "Marcar como gestionado en Farmatools"}
+            </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3"
+              disabled={isPending}
+              onClick={handleToggleDevuelto}
+            >
+              <PackageCheck className="h-4 w-4" />
+              {devuelto
+                ? "Marcar como pendiente de devolución"
+                : "Marcar como devuelto"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

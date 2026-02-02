@@ -7,12 +7,12 @@ import { ArrowUpRight, ArrowDownLeft } from "lucide-react"
 export default async function PendientesPage() {
   const [pendingReturn, pendingTheirReturn, hospitals] = await Promise.all([
     prisma.loan.findMany({
-      where: { status: "PENDIENTE_DEVOLUCION", type: "SOLICITADO" },
+      where: { devuelto: false, type: "SOLICITADO" },
       include: { hospital: true, medication: true },
       orderBy: { createdAt: "desc" },
     }),
     prisma.loan.findMany({
-      where: { status: "PENDIENTE_DEVOLUCION", type: "PRESTADO" },
+      where: { devuelto: false, type: "PRESTADO" },
       include: { hospital: true, medication: true },
       orderBy: { createdAt: "desc" },
     }),

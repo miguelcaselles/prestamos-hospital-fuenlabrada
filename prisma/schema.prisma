@@ -13,13 +13,6 @@ enum LoanType {
   PRESTADO
 }
 
-enum LoanStatus {
-  PENDIENTE_FARMATOOLS
-  GESTIONADO_FARMATOOLS
-  PENDIENTE_DEVOLUCION
-  DEVUELTO
-}
-
 model Hospital {
   id        String   @id @default(cuid())
   name      String
@@ -49,24 +42,26 @@ model Medication {
 }
 
 model Loan {
-  id              String     @id @default(cuid())
-  referenceNumber String     @unique @map("reference_number")
-  type            LoanType
-  hospitalId      String     @map("hospital_id")
-  hospital        Hospital   @relation(fields: [hospitalId], references: [id])
-  medicationId    String     @map("medication_id")
-  medication      Medication @relation(fields: [medicationId], references: [id])
-  units           Int
-  status          LoanStatus @default(PENDIENTE_FARMATOOLS)
-  emailSentTo     String?    @map("email_sent_to")
-  pdfUrl          String?    @map("pdf_url")
-  notes           String?
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
+  id                    String     @id @default(cuid())
+  referenceNumber       String     @unique @map("reference_number")
+  type                  LoanType
+  hospitalId            String     @map("hospital_id")
+  hospital              Hospital   @relation(fields: [hospitalId], references: [id])
+  medicationId          String     @map("medication_id")
+  medication            Medication @relation(fields: [medicationId], references: [id])
+  units                 Int
+  farmatoolsGestionado  Boolean    @default(false) @map("farmatools_gestionado")
+  devuelto              Boolean    @default(false)
+  emailSentTo           String?    @map("email_sent_to")
+  pdfUrl                String?    @map("pdf_url")
+  notes                 String?
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
 
   @@index([hospitalId])
   @@index([medicationId])
-  @@index([status])
+  @@index([farmatoolsGestionado])
+  @@index([devuelto])
   @@index([type])
   @@index([createdAt])
   @@map("loans")

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Search, X } from "lucide-react"
-import { LOAN_STATUS_LABELS, LOAN_TYPE_LABELS } from "@/lib/constants"
+import { LOAN_TYPE_LABELS } from "@/lib/constants"
 import type { Hospital } from "@/types"
 
 interface LoanFiltersProps {
@@ -55,19 +55,30 @@ export function LoanFilters({ hospitals }: LoanFiltersProps) {
       </div>
 
       <Select
-        value={searchParams.get("status") ?? "all"}
-        onValueChange={(value) => updateFilter("status", value)}
+        value={searchParams.get("farmatools") ?? "all"}
+        onValueChange={(value) => updateFilter("farmatools", value)}
       >
         <SelectTrigger className="w-[220px]">
-          <SelectValue placeholder="Estado" />
+          <SelectValue placeholder="Farmatools" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Todos los estados</SelectItem>
-          {Object.entries(LOAN_STATUS_LABELS).map(([key, label]) => (
-            <SelectItem key={key} value={key}>
-              {label}
-            </SelectItem>
-          ))}
+          <SelectItem value="all">Todos (Farmatools)</SelectItem>
+          <SelectItem value="false">Pendiente de gestionar</SelectItem>
+          <SelectItem value="true">Gestionado</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("devuelto") ?? "all"}
+        onValueChange={(value) => updateFilter("devuelto", value)}
+      >
+        <SelectTrigger className="w-[200px]">
+          <SelectValue placeholder="Devolución" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos (Devolución)</SelectItem>
+          <SelectItem value="false">Pendiente</SelectItem>
+          <SelectItem value="true">Devuelto</SelectItem>
         </SelectContent>
       </Select>
 

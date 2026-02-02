@@ -1,19 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { LOAN_TYPE_LABELS, LOAN_STATUS_LABELS } from "@/lib/constants"
+import {
+  LOAN_TYPE_LABELS,
+  getFarmatoolsLabel,
+  getDevolucionLabel,
+} from "@/lib/constants"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
-  const status = searchParams.get("status")
   const type = searchParams.get("type")
   const hospitalId = searchParams.get("hospitalId")
+  const farmatools = searchParams.get("farmatools")
+  const devuelto = searchParams.get("devuelto")
 
   const where: Record<string, unknown> = {}
-  if (status) where.status = status
   if (type) where.type = type
   if (hospitalId) where.hospitalId = hospitalId
+  if (farmatools === "true") where.farmatoolsGestionado = true
+  else if (farmatools === "false") where.farmatoolsGestionado = false
+  if (devuelto === "true") where.devuelto = true
+  else if (devuelto === "false") where.devuelto = false
 
   const loans = await prisma.loan.findMany({
     where,
@@ -28,24 +36,26 @@ export async function GET(request: NextRequest) {
     "Hospital",
     "Medicamento",
     "Unidades",
-    "Estado",
+    "Farmatools",
+    "Devolución",
     "Email",
   ]
 
-  const rows = loans.map((loan: { referenceNumber: string; createdAt: Date; type: string; hospital: { name: string }; medication: { name: string }; units: number; status: string; emailSentTo: string | null }) => [
+  const rows = loans.map((loan) => [
     loan.referenceNumber,
     format(new Date(loan.createdAt), "dd/MM/yyyy", { locale: es }),
     LOAN_TYPE_LABELS[loan.type] || loan.type,
     loan.hospital.name,
     loan.medication.name,
     String(loan.units),
-    LOAN_STATUS_LABELS[loan.status] || loan.status,
+    getFarmatoolsLabel(loan.farmatoolsGestionado),
+    getDevolucionLabel(loan.devuelto, loan.type),
     loan.emailSentTo || "",
   ])
 
   const csv = [
     headers.join(";"),
-    ...rows.map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(";")),
+    ...rows.map((row) => row.map((cell) => `"${cell}"`).join(";")),
   ].join("\n")
 
   // BOM for Excel compatibility

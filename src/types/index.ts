@@ -1,5 +1,4 @@
 export type LoanType = "SOLICITADO" | "PRESTADO"
-export type LoanStatus = "PENDIENTE_FARMATOOLS" | "GESTIONADO_FARMATOOLS" | "PENDIENTE_DEVOLUCION" | "DEVUELTO"
 
 export type Hospital = {
   id: string
@@ -30,7 +29,8 @@ export type Loan = {
   hospitalId: string
   medicationId: string
   units: number
-  status: LoanStatus
+  farmatoolsGestionado: boolean
+  devuelto: boolean
   emailSentTo: string | null
   pdfUrl: string | null
   notes: string | null

@@ -8,13 +8,13 @@ import { PlusCircle } from "lucide-react"
 export default async function DashboardPage() {
   const [totalActive, pendingFarmatools, pendingReturn, pendingTheirReturn, recentLoans] =
     await Promise.all([
-      prisma.loan.count({ where: { status: { not: "DEVUELTO" } } }),
-      prisma.loan.count({ where: { status: "PENDIENTE_FARMATOOLS" } }),
+      prisma.loan.count({ where: { devuelto: false } }),
+      prisma.loan.count({ where: { farmatoolsGestionado: false } }),
       prisma.loan.count({
-        where: { status: "PENDIENTE_DEVOLUCION", type: "SOLICITADO" },
+        where: { devuelto: false, type: "SOLICITADO" },
       }),
       prisma.loan.count({
-        where: { status: "PENDIENTE_DEVOLUCION", type: "PRESTADO" },
+        where: { devuelto: false, type: "PRESTADO" },
       }),
       prisma.loan.findMany({
         take: 10,

@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Eye, RefreshCw, FileDown } from "lucide-react"
-import { LoanStatusBadge } from "./loan-status-badge"
+import { LoanStatusBadges } from "./loan-status-badge"
 import { LoanStatusDialog } from "./loan-status-dialog"
 import { LoanFilters } from "./loan-filters"
 import { LOAN_TYPE_LABELS } from "@/lib/constants"
@@ -91,11 +91,12 @@ export function LoanTable({ loans, hospitals }: LoanTableProps) {
       ),
     },
     {
-      accessorKey: "status",
+      id: "status",
       header: "Estado",
       cell: ({ row }) => (
-        <LoanStatusBadge
-          status={row.original.status}
+        <LoanStatusBadges
+          farmatoolsGestionado={row.original.farmatoolsGestionado}
+          devuelto={row.original.devuelto}
           loanType={row.original.type}
         />
       ),
@@ -168,7 +169,8 @@ export function LoanTable({ loans, hospitals }: LoanTableProps) {
           open={statusDialogOpen}
           onOpenChange={setStatusDialogOpen}
           loanId={selectedLoan.id}
-          currentStatus={selectedLoan.status}
+          farmatoolsGestionado={selectedLoan.farmatoolsGestionado}
+          devuelto={selectedLoan.devuelto}
           loanType={selectedLoan.type}
         />
       )}

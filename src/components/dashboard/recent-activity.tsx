@@ -3,8 +3,10 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   LOAN_TYPE_LABELS,
-  LOAN_STATUS_LABELS,
-  LOAN_STATUS_COLORS,
+  getFarmatoolsColor,
+  getFarmatoolsLabel,
+  getDevolucionColor,
+  getDevolucionLabel,
 } from "@/lib/constants"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
@@ -64,12 +66,20 @@ export function RecentActivity({ loans }: RecentActivityProps) {
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1 ml-4">
-                <Badge
-                  variant="outline"
-                  className={LOAN_STATUS_COLORS[loan.status]}
-                >
-                  {LOAN_STATUS_LABELS[loan.status]}
-                </Badge>
+                <div className="flex gap-1">
+                  <Badge
+                    variant="outline"
+                    className={getFarmatoolsColor(loan.farmatoolsGestionado)}
+                  >
+                    {getFarmatoolsLabel(loan.farmatoolsGestionado)}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={getDevolucionColor(loan.devuelto)}
+                  >
+                    {getDevolucionLabel(loan.devuelto, loan.type)}
+                  </Badge>
+                </div>
                 <span className="text-xs text-gray-400">
                   {formatDistanceToNow(new Date(loan.createdAt), {
                     addSuffix: true,
