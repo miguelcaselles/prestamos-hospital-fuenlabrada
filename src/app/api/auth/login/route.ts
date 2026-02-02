@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
 
 const APP_PASSWORD = process.env.APP_PASSWORD || "Fuenlabradafa01"
 const COOKIE_NAME = "prestamos-auth"
@@ -18,8 +17,8 @@ export async function POST(request: NextRequest) {
 
   const token = Buffer.from(`authenticated:${Date.now()}`).toString("base64")
 
-  const cookieStore = await cookies()
-  cookieStore.set(COOKIE_NAME, token, {
+  const response = NextResponse.json({ success: true })
+  response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -27,5 +26,5 @@ export async function POST(request: NextRequest) {
     path: "/",
   })
 
-  return NextResponse.json({ success: true })
+  return response
 }
