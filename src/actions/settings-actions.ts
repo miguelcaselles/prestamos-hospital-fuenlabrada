@@ -12,18 +12,25 @@ export async function getSmtpSettings() {
 
 export async function updateSmtpSettings(data: SmtpSettingsValues) {
   const validated = smtpSettingsSchema.parse(data)
+  const dbData = { ...validated, ccEmail: validated.ccEmail || null }
 
   return prisma.smtpSettings.upsert({
     where: { id: "default" },
-    update: validated,
+    update: dbData,
     create: {
       id: "default",
-      ...validated,
+      ...dbData,
     },
   })
 }
 
 export async function sendSmtpTestEmail(to: string) {
-  await sendTestEmail(to)
-  return { success: true }
+  try {
+    await sendTestEmail(to)
+    return { success: true, error: null }
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Error desconocido al enviar email"
+    return { success: false, error: message }
+  }
 }

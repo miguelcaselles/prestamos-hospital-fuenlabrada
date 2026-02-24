@@ -1,6 +1,6 @@
 "use client"
 
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loanFormSchema, LoanFormValues } from "@/lib/validators"
 import {
@@ -16,11 +16,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Combobox } from "@/components/shared/combobox"
+import { MedicationSearch } from "@/components/loans/medication-search"
 import { createLoan } from "@/actions/loan-actions"
+import { createMedicationQuick } from "@/actions/medication-actions"
 import { toast } from "sonner"
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowDownLeft, ArrowUpRight, Loader2 } from "lucide-react"
+import { ArrowDownLeft, ArrowUpRight, Loader2, Mail, Plus, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Hospital, Medication } from "@/types"
 
@@ -31,6 +33,8 @@ interface LoanFormProps {
 
 export function LoanForm({ hospitals, medications }: LoanFormProps) {
   const [isPending, startTransition] = useTransition()
+  const [isCreatingMed, setIsCreatingMed] = useState(false)
+  const [localMedications, setLocalMedications] = useState(medications)
   const router = useRouter()
 
   const form = useForm<LoanFormValues>({
@@ -38,14 +42,18 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
     defaultValues: {
       type: undefined,
       hospitalId: "",
-      medicationId: "",
-      units: 1,
+      items: [{ medicationId: "", units: 1 }],
       emailSentTo: "",
+      pharmacistName: "",
       notes: "",
     },
   })
 
-  const selectedType = form.watch("type")
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  })
+
   const selectedHospitalId = form.watch("hospitalId")
 
   // Auto-fill email from selected hospital
@@ -64,13 +72,23 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
     description: h.email || undefined,
   }))
 
-  const medicationOptions = medications.map((m) => ({
-    value: m.id,
-    label: m.name,
-    description: m.activeIngredient
-      ? `${m.activeIngredient}${m.presentation ? ` - ${m.presentation}` : ""}`
-      : m.presentation || undefined,
-  }))
+  const handleCreateMedication = async (name: string, index: number) => {
+    setIsCreatingMed(true)
+    try {
+      const newMed = await createMedicationQuick(name)
+      setLocalMedications((prev) => [...prev, newMed])
+      form.setValue(`items.${index}.medicationId`, newMed.id)
+      toast.success(`Medicamento "${name}" creado`)
+    } catch {
+      toast.error("Error al crear el medicamento")
+    } finally {
+      setIsCreatingMed(false)
+    }
+  }
+
+  const handleMedicationCreated = (med: Medication) => {
+    setLocalMedications((prev) => [...prev, med])
+  }
 
   function onSubmit(data: LoanFormValues) {
     startTransition(async () => {
@@ -102,9 +120,9 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
                 <div className="grid gap-4 md:grid-cols-2">
                   <Card
                     className={cn(
-                      "cursor-pointer transition-all hover:border-blue-300",
+                      "cursor-pointer transition-all hover:border-teal-300",
                       field.value === "SOLICITADO"
-                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500"
+                        ? "border-teal-500 bg-teal-50 ring-2 ring-teal-500"
                         : "border-gray-200"
                     )}
                     onClick={() => field.onChange("SOLICITADO")}
@@ -114,7 +132,7 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
                         className={cn(
                           "rounded-lg p-3",
                           field.value === "SOLICITADO"
-                            ? "bg-blue-100"
+                            ? "bg-teal-100"
                             : "bg-gray-100"
                         )}
                       >
@@ -122,7 +140,7 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
                           className={cn(
                             "h-6 w-6",
                             field.value === "SOLICITADO"
-                              ? "text-blue-600"
+                              ? "text-teal-600"
                               : "text-gray-400"
                           )}
                         />
@@ -130,8 +148,14 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
                       <div>
                         <p className="font-semibold">Solicitamos préstamo</p>
                         <p className="text-sm text-gray-500">
-                          Solicitamos medicación a otro hospital
+                          Pedimos medicación a otro hospital
                         </p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Mail className="h-3 w-3 text-teal-500" />
+                          <span className="text-xs text-teal-600">
+                            Se enviará email automáticamente
+                          </span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -166,7 +190,7 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
                       <div>
                         <p className="font-semibold">Nos solicitan préstamo</p>
                         <p className="text-sm text-gray-500">
-                          Otro hospital nos solicita medicación
+                          Otro hospital nos pide medicación
                         </p>
                       </div>
                     </CardContent>
@@ -200,47 +224,80 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
           )}
         />
 
-        {/* Medication */}
-        <FormField
-          control={form.control}
-          name="medicationId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Medicamento</FormLabel>
-              <FormControl>
-                <Combobox
-                  options={medicationOptions}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  placeholder="Seleccionar medicamento..."
-                  searchPlaceholder="Buscar medicamento..."
-                  emptyMessage="No se encontraron medicamentos."
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        {/* Medications */}
+        <div className="space-y-3">
+          <FormLabel className="text-base font-semibold">Medicamentos</FormLabel>
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex gap-3 items-start">
+              <FormField
+                control={form.control}
+                name={`items.${index}.medicationId`}
+                render={({ field: medField }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <MedicationSearch
+                        medications={localMedications}
+                        value={medField.value}
+                        onValueChange={medField.onChange}
+                        onMedicationCreated={handleMedicationCreated}
+                        onCreateManual={(name) => handleCreateMedication(name, index)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`items.${index}.units`}
+                render={({ field: unitsField }) => (
+                  <FormItem className="w-24">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        placeholder="Uds."
+                        {...unitsField}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {fields.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="mt-0.5 shrink-0"
+                  onClick={() => remove(index)}
+                >
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+              )}
+            </div>
+          ))}
+          {isCreatingMed && (
+            <p className="text-xs text-gray-500 flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Creando medicamento...
+            </p>
           )}
-        />
-
-        {/* Units */}
-        <FormField
-          control={form.control}
-          name="units"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Unidades</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  placeholder="Número de unidades"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => append({ medicationId: "", units: 1 })}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Añadir medicamento
+          </Button>
+          {form.formState.errors.items?.message && (
+            <p className="text-sm text-red-500">
+              {form.formState.errors.items.message}
+            </p>
           )}
-        />
+        </div>
 
         {/* Email */}
         <FormField
@@ -261,6 +318,24 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
                   Email del hospital: {selectedHospital.email}
                 </p>
               )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Pharmacist Name */}
+        <FormField
+          control={form.control}
+          name="pharmacistName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Farmacéutico responsable (opcional)</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Nombre del farmacéutico"
+                  {...field}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -33,8 +33,11 @@ import {
   Hash,
   Calendar,
   Mail,
+  User,
   X,
   Loader2,
+  ChevronRight,
+  MousePointerClick,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { LoanWithRelations } from "@/types"
@@ -92,37 +95,39 @@ export function LoanDetail({ loan }: LoanDetailProps) {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1.5 text-sm text-gray-500">
+        <Link href="/prestamos" className="hover:text-gray-900 transition-colors">
+          Préstamos
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="text-gray-900 font-medium">{loan.referenceNumber}</span>
+      </nav>
+
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/prestamos">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {loan.referenceNumber}
-              </h1>
-              <Badge
-                variant="outline"
-                className={
-                  loan.type === "SOLICITADO"
-                    ? "bg-purple-50 text-purple-700 border-purple-200"
-                    : "bg-teal-50 text-teal-700 border-teal-200"
-                }
-              >
-                {LOAN_TYPE_LABELS[loan.type]}
-              </Badge>
-            </div>
-            <p className="text-sm text-gray-500 mt-1">
-              Creado el{" "}
-              {format(new Date(loan.createdAt), "dd 'de' MMMM 'de' yyyy", {
-                locale: es,
-              })}
-            </p>
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {loan.referenceNumber}
+            </h1>
+            <Badge
+              variant="outline"
+              className={
+                loan.type === "SOLICITADO"
+                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                  : "bg-teal-50 text-teal-700 border-teal-200"
+              }
+            >
+              {LOAN_TYPE_LABELS[loan.type]}
+            </Badge>
           </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Creado el{" "}
+            {format(new Date(loan.createdAt), "dd 'de' MMMM 'de' yyyy, HH:mm", {
+              locale: es,
+            })}
+          </p>
         </div>
         <div className="flex gap-2">
           <Link href={`/api/pdf/${loan.id}`} target="_blank">
@@ -140,7 +145,7 @@ export function LoanDetail({ loan }: LoanDetailProps) {
           <TooltipTrigger asChild>
             <Card
               className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
+                "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] group",
                 isFarmatoolsPending && "opacity-70"
               )}
               onClick={handleToggleFarmatools}
@@ -163,12 +168,16 @@ export function LoanDetail({ loan }: LoanDetailProps) {
                       )}
                       {getFarmatoolsLabel(optimisticFarmatools)}
                     </Badge>
+                    <p className="text-xs text-gray-400 mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MousePointerClick className="h-3 w-3" />
+                      Click para cambiar estado
+                    </p>
                   </div>
                   <div
                     className={cn(
                       "flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-200",
                       optimisticFarmatools
-                        ? "bg-blue-100 text-blue-600"
+                        ? "bg-teal-100 text-teal-600"
                         : "bg-yellow-100 text-yellow-600"
                     )}
                   >
@@ -195,7 +204,7 @@ export function LoanDetail({ loan }: LoanDetailProps) {
           <TooltipTrigger asChild>
             <Card
               className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
+                "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] group",
                 isDevueltoPending && "opacity-70"
               )}
               onClick={handleToggleDevuelto}
@@ -218,6 +227,10 @@ export function LoanDetail({ loan }: LoanDetailProps) {
                       )}
                       {getDevolucionLabel(optimisticDevuelto, loan.type)}
                     </Badge>
+                    <p className="text-xs text-gray-400 mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MousePointerClick className="h-3 w-3" />
+                      Click para cambiar estado
+                    </p>
                   </div>
                   <div
                     className={cn(
@@ -264,27 +277,34 @@ export function LoanDetail({ loan }: LoanDetailProps) {
             <Separator />
             <div className="flex items-start gap-3">
               <Pill className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-gray-500">Medicamento</p>
-                <p className="font-medium">{loan.medication.name}</p>
-                {loan.medication.activeIngredient && (
-                  <p className="text-sm text-gray-500">
-                    {loan.medication.activeIngredient}
-                  </p>
+              <div className="w-full">
+                <p className="text-sm font-medium text-gray-500 mb-2">Medicamentos</p>
+                <div className="space-y-2">
+                  {loan.items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between rounded border p-2">
+                      <div>
+                        <p className="font-medium">{item.medication.name}</p>
+                        {item.medication.activeIngredient && (
+                          <p className="text-sm text-gray-500">{item.medication.activeIngredient}</p>
+                        )}
+                        {item.medication.presentation && (
+                          <p className="text-sm text-gray-500">{item.medication.presentation}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold">{item.units}</p>
+                        <p className="text-xs text-gray-500">uds.</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {loan.items.length > 1 && (
+                  <div className="mt-2 text-right">
+                    <p className="text-sm text-gray-500">
+                      Total: <span className="font-bold text-lg">{loan.items.reduce((s, i) => s + i.units, 0)}</span> uds.
+                    </p>
+                  </div>
                 )}
-                {loan.medication.presentation && (
-                  <p className="text-sm text-gray-500">
-                    {loan.medication.presentation}
-                  </p>
-                )}
-              </div>
-            </div>
-            <Separator />
-            <div className="flex items-start gap-3">
-              <Hash className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-gray-500">Unidades</p>
-                <p className="text-2xl font-bold">{loan.units}</p>
               </div>
             </div>
           </CardContent>
@@ -336,6 +356,20 @@ export function LoanDetail({ loan }: LoanDetailProps) {
                 <p>{loan.emailSentTo || "No enviado"}</p>
               </div>
             </div>
+            {loan.pharmacistName && (
+              <>
+                <Separator />
+                <div className="flex items-start gap-3">
+                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">
+                      Farmacéutico responsable
+                    </p>
+                    <p>{loan.pharmacistName}</p>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

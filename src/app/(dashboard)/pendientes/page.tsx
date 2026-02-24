@@ -14,12 +14,12 @@ export default async function PendientesPage({ searchParams }: PageProps) {
   const [pendingReturn, pendingTheirReturn, hospitals] = await Promise.all([
     prisma.loan.findMany({
       where: { devuelto: false, type: "SOLICITADO" },
-      include: { hospital: true, medication: true },
+      include: { hospital: true, items: { include: { medication: true } } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.loan.findMany({
       where: { devuelto: false, type: "PRESTADO" },
-      include: { hospital: true, medication: true },
+      include: { hospital: true, items: { include: { medication: true } } },
       orderBy: { createdAt: "desc" },
     }),
     getHospitals(),

@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const APP_PASSWORD = process.env.APP_PASSWORD || "Fuenlabradafa01"
+const APP_PASSWORD = process.env.APP_PASSWORD
 const COOKIE_NAME = "prestamos-auth"
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 
 export async function POST(request: NextRequest) {
+  if (!APP_PASSWORD) {
+    console.error("APP_PASSWORD environment variable is not set")
+    return NextResponse.json(
+      { error: "Error de configuración del servidor" },
+      { status: 500 }
+    )
+  }
+
   const body = await request.json()
   const { password } = body as { password: string }
 

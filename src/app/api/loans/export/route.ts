@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const loans = await prisma.loan.findMany({
     where,
-    include: { hospital: true, medication: true },
+    include: { hospital: true, items: { include: { medication: true } } },
     orderBy: { createdAt: "desc" },
   })
 
@@ -43,11 +43,11 @@ export async function GET(request: NextRequest) {
 
   const rows = loans.map((loan) => [
     loan.referenceNumber,
-    format(new Date(loan.createdAt), "dd/MM/yyyy", { locale: es }),
+    format(new Date(loan.createdAt), "dd/MM/yyyy HH:mm", { locale: es }),
     LOAN_TYPE_LABELS[loan.type] || loan.type,
     loan.hospital.name,
-    loan.medication.name,
-    String(loan.units),
+    loan.items.map((i: { medication: { name: string } }) => i.medication.name).join(" | "),
+    String(loan.items.reduce((s: number, i: { units: number }) => s + i.units, 0)),
     getFarmatoolsLabel(loan.farmatoolsGestionado),
     getDevolucionLabel(loan.devuelto, loan.type),
     loan.emailSentTo || "",

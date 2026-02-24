@@ -43,6 +43,7 @@ export function SmtpSettingsForm({ settings }: SmtpSettingsFormProps) {
       password: settings?.password ?? "",
       fromName: settings?.fromName ?? "Hospital de Fuenlabrada - Farmacia",
       fromEmail: settings?.fromEmail ?? "",
+      ccEmail: settings?.ccEmail ?? "",
     },
   })
 
@@ -65,8 +66,12 @@ export function SmtpSettingsForm({ settings }: SmtpSettingsFormProps) {
 
     startSendTest(async () => {
       try {
-        await sendSmtpTestEmail(testEmail)
-        toast.success("Email de prueba enviado correctamente")
+        const result = await sendSmtpTestEmail(testEmail)
+        if (result.success) {
+          toast.success("Email de prueba enviado correctamente")
+        } else {
+          toast.error(`Error SMTP: ${result.error}`)
+        }
       } catch {
         toast.error(
           "Error al enviar el email de prueba. Verifica la configuración SMTP."
@@ -196,6 +201,27 @@ export function SmtpSettingsForm({ settings }: SmtpSettingsFormProps) {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="ccEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email de copia (CC) - Secretaría</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="secretaria.farmacia@hospital.es"
+                        {...field}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-gray-500">
+                      Si se indica, todos los emails de préstamos se enviarán también en copia a esta dirección.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={isPending}>

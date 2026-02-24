@@ -43,33 +43,33 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-800 via-teal-700 to-teal-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-20 w-72 h-72 rounded-full bg-white/20 blur-3xl" />
           <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
         </div>
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="flex items-center gap-4 mb-8">
-            <Image src="/logo.svg" alt="Logo" width={56} height={56} />
+            <Image src="/logo.svg" alt="MedLoan" width={56} height={56} />
             <div>
-              <h2 className="text-white text-xl font-bold">H.U. Fuenlabrada</h2>
-              <p className="text-blue-200 text-sm">Servicio de Farmacia</p>
+              <h2 className="text-white text-xl font-bold">Med<span className="text-teal-300">Loan</span></h2>
+              <p className="text-teal-200 text-sm">Gestión de Préstamos de Medicación</p>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-            Gestión de Préstamos<br />de Medicamentos
+            Control y seguimiento<br />de préstamos
           </h1>
-          <p className="text-blue-100 text-lg max-w-md leading-relaxed">
-            Sistema de control y seguimiento de préstamos de medicamentos entre hospitales.
+          <p className="text-teal-100 text-lg max-w-md leading-relaxed">
+            Sistema integral de gestión de préstamos de medicamentos entre hospitales.
           </p>
           <div className="mt-12 grid grid-cols-2 gap-4 max-w-sm">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
               <p className="text-3xl font-bold text-white">24/7</p>
-              <p className="text-blue-200 text-sm mt-1">Acceso continuo</p>
+              <p className="text-teal-200 text-sm mt-1">Acceso continuo</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
               <p className="text-3xl font-bold text-white">PDF</p>
-              <p className="text-blue-200 text-sm mt-1">Documentos al instante</p>
+              <p className="text-teal-200 text-sm mt-1">Documentos al instante</p>
             </div>
           </div>
         </div>
@@ -80,16 +80,16 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center justify-center gap-3 mb-10">
-            <Image src="/logo.svg" alt="Logo" width={44} height={44} />
+            <Image src="/logo.svg" alt="MedLoan" width={44} height={44} />
             <div>
-              <h2 className="text-lg font-bold text-gray-900">H.U. Fuenlabrada</h2>
-              <p className="text-xs text-gray-500">Servicio de Farmacia</p>
+              <h2 className="text-lg font-bold text-gray-900">Med<span className="text-teal-700">Loan</span></h2>
+              <p className="text-xs text-gray-500">Gestión de Préstamos de Medicación</p>
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <div className="hidden lg:flex items-center justify-center w-14 h-14 bg-blue-100 rounded-2xl mx-auto mb-4">
-              <Lock className="h-7 w-7 text-blue-600" />
+            <div className="hidden lg:flex items-center justify-center w-14 h-14 bg-teal-100 rounded-2xl mx-auto mb-4">
+              <Lock className="h-7 w-7 text-teal-700" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Acceso al sistema</h1>
             <p className="text-gray-500 text-sm mt-2">
@@ -134,7 +134,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base font-medium bg-blue-600 hover:bg-blue-700"
+              className="w-full h-12 text-base font-medium bg-teal-600 hover:bg-teal-700"
               disabled={loading || !password}
             >
               {loading ? "Verificando..." : "Entrar"}
@@ -142,8 +142,8 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-xs text-gray-400 mt-8">
-            Hospital Universitario de Fuenlabrada<br />
-            Camino del Molino, 2 - 28942 Fuenlabrada (Madrid)
+            MedLoan &middot; Gestión de Préstamos de Medicación<br />
+            Desarrollado por Miguel Caselles
           </p>
         </div>
       </div>

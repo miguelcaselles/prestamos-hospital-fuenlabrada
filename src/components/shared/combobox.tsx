@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,6 +22,7 @@ interface ComboboxOption {
   value: string
   label: string
   description?: string
+  keywords?: string[]
 }
 
 interface ComboboxProps {
@@ -31,6 +32,8 @@ interface ComboboxProps {
   placeholder?: string
   searchPlaceholder?: string
   emptyMessage?: string
+  allowCreate?: boolean
+  onCreateNew?: (term: string) => void
 }
 
 export function Combobox({
@@ -40,8 +43,11 @@ export function Combobox({
   placeholder = "Seleccionar...",
   searchPlaceholder = "Buscar...",
   emptyMessage = "No se encontraron resultados.",
+  allowCreate = false,
+  onCreateNew,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
 
   const selectedOption = options.find((option) => option.value === value)
 
@@ -64,16 +70,41 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+          />
           <CommandList>
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandEmpty>
+              {allowCreate && searchTerm.trim().length > 0 ? (
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-2 py-1.5 text-sm cursor-pointer hover:bg-accent rounded-sm"
+                  onClick={() => {
+                    onCreateNew?.(searchTerm.trim())
+                    setSearchTerm("")
+                    setOpen(false)
+                  }}
+                >
+                  <Plus className="h-4 w-4 text-teal-600" />
+                  <span>
+                    Crear: <span className="font-semibold">&quot;{searchTerm.trim()}&quot;</span>
+                  </span>
+                </button>
+              ) : (
+                emptyMessage
+              )}
+            </CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.label}
+                  keywords={option.keywords}
                   onSelect={() => {
                     onValueChange(option.value === value ? "" : option.value)
+                    setSearchTerm("")
                     setOpen(false)
                   }}
                 >

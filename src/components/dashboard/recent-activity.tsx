@@ -47,7 +47,7 @@ export function RecentActivity({ loans }: RecentActivityProps) {
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-blue-600">
+                  <span className="text-sm font-medium text-teal-700">
                     {loan.referenceNumber}
                   </span>
                   <Badge
@@ -62,7 +62,7 @@ export function RecentActivity({ loans }: RecentActivityProps) {
                   </Badge>
                 </div>
                 <p className="text-sm text-gray-600 mt-1 truncate">
-                  {loan.medication.name} - {loan.hospital.name}
+                  {loan.items?.[0]?.medication.name ?? "—"}{loan.items.length > 1 ? ` (+${loan.items.length - 1})` : ""} - {loan.hospital.name}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1 ml-4">

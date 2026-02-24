@@ -16,6 +16,7 @@ import {
   PlusCircle,
   FileText,
   Clock,
+  BarChart3,
   Building2,
   Pill,
   Settings,
@@ -92,7 +93,7 @@ export function CommandPalette() {
             {results.map((loan) => (
               <CommandItem
                 key={loan.id}
-                value={`${loan.referenceNumber} ${loan.hospital.name} ${loan.medication.name}`}
+                value={`${loan.referenceNumber} ${loan.hospital.name} ${loan.items.map((i) => i.medication.name).join(" ")}`}
                 onSelect={() => navigate(`/prestamos/${loan.id}`)}
               >
                 <Search className="mr-2 h-4 w-4 text-gray-400" />
@@ -100,7 +101,7 @@ export function CommandPalette() {
                   <div>
                     <span className="font-medium">{loan.referenceNumber}</span>
                     <span className="text-gray-500 ml-2">
-                      {loan.medication.name}
+                      {loan.items?.[0]?.medication.name ?? "—"}{loan.items.length > 1 ? ` (+${loan.items.length - 1})` : ""}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -131,6 +132,10 @@ export function CommandPalette() {
               <CommandItem onSelect={() => navigate("/pendientes")}>
                 <Clock className="mr-2 h-4 w-4" />
                 Pendientes
+              </CommandItem>
+              <CommandItem onSelect={() => navigate("/estadisticas")}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Estadísticas
               </CommandItem>
             </CommandGroup>
             <CommandSeparator />

@@ -20,8 +20,8 @@ export function SummaryCards({
       title: "Préstamos Activos",
       value: totalActive,
       icon: FileText,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-teal-600",
+      bg: "bg-teal-50",
       href: "/prestamos",
     },
     {

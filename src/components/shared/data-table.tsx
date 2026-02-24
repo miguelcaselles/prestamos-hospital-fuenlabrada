@@ -29,6 +29,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Search,
+  Inbox,
 } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
@@ -97,7 +98,7 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-white overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -136,9 +137,13 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-gray-500"
+                  className="h-32 text-center"
                 >
-                  No se encontraron resultados.
+                  <div className="flex flex-col items-center gap-2 text-gray-400">
+                    <Inbox className="h-8 w-8" />
+                    <p className="text-sm font-medium">No se encontraron resultados</p>
+                    <p className="text-xs">Prueba a cambiar los filtros de búsqueda</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -147,7 +152,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-2">
         <div className="text-sm text-gray-500">
           {enableRowSelection && (
             <span>
@@ -161,10 +166,11 @@ export function DataTable<TData, TValue>({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="icon"
+            className="h-9 w-9 sm:h-9 sm:w-9"
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
@@ -173,18 +179,19 @@ export function DataTable<TData, TValue>({
           <Button
             variant="outline"
             size="icon"
+            className="h-9 w-9 sm:h-9 sm:w-9"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-gray-600">
-            Página {table.getState().pagination.pageIndex + 1} de{" "}
-            {table.getPageCount()}
+          <span className="text-sm text-gray-600 px-1">
+            {table.getState().pagination.pageIndex + 1}/{table.getPageCount()}
           </span>
           <Button
             variant="outline"
             size="icon"
+            className="h-9 w-9 sm:h-9 sm:w-9"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
@@ -193,6 +200,7 @@ export function DataTable<TData, TValue>({
           <Button
             variant="outline"
             size="icon"
+            className="h-9 w-9 sm:h-9 sm:w-9"
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
           >

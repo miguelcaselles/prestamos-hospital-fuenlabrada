@@ -24,7 +24,7 @@ import {
   updateMedication,
 } from "@/actions/medication-actions"
 import { toast } from "sonner"
-import { useTransition } from "react"
+import { useEffect, useTransition } from "react"
 import type { Medication } from "@/types"
 
 interface MedicationFormProps {
@@ -44,12 +44,23 @@ export function MedicationForm({
   const form = useForm<MedicationFormValues>({
     resolver: zodResolver(medicationFormSchema),
     defaultValues: {
-      name: medication?.name ?? "",
-      nationalCode: medication?.nationalCode ?? "",
-      presentation: medication?.presentation ?? "",
-      activeIngredient: medication?.activeIngredient ?? "",
+      name: "",
+      nationalCode: "",
+      presentation: "",
+      activeIngredient: "",
     },
   })
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: medication?.name ?? "",
+        nationalCode: medication?.nationalCode ?? "",
+        presentation: medication?.presentation ?? "",
+        activeIngredient: medication?.activeIngredient ?? "",
+      })
+    }
+  }, [open, medication, form])
 
   function onSubmit(data: MedicationFormValues) {
     startTransition(async () => {

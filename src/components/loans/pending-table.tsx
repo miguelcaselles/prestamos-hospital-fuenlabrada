@@ -17,6 +17,16 @@ import { bulkMarkReturned } from "@/actions/loan-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { CheckCircle2, FileDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { LoanWithRelations, Hospital } from "@/types"
@@ -32,6 +42,7 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
   const [isDownloading, setIsDownloading] = useState(false)
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>("all")
   const [selectedLoanIds, setSelectedLoanIds] = useState<string[]>([])
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
 
   const filteredLoans =
     selectedHospitalId === "all"
@@ -74,7 +85,11 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
       toast.warning("Selecciona al menos un préstamo")
       return
     }
+    setShowConfirmDialog(true)
+  }
 
+  const confirmBulkMarkReturned = () => {
+    setShowConfirmDialog(false)
     startTransition(async () => {
       try {
         await bulkMarkReturned(selectedLoanIds)
@@ -132,7 +147,7 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
       cell: ({ row }) => (
         <Link
           href={`/prestamos/${row.original.id}`}
-          className="font-medium text-blue-600 hover:underline"
+          className="font-medium text-teal-700 hover:underline"
         >
           {row.getValue("referenceNumber")}
         </Link>
@@ -142,7 +157,7 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
       accessorKey: "createdAt",
       header: "Fecha",
       cell: ({ row }) =>
-        format(new Date(row.getValue("createdAt")), "dd/MM/yyyy", {
+        format(new Date(row.getValue("createdAt")), "dd/MM/yyyy HH:mm", {
           locale: es,
         }),
     },
@@ -152,15 +167,24 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
       header: "Hospital",
     },
     {
-      accessorFn: (row) => row.medication.name,
       id: "medication",
       header: "Medicamento",
+      cell: ({ row }) => {
+        const items = row.original.items
+        if (items.length === 0) return "—"
+        if (items.length === 1) return items[0].medication.name
+        return (
+          <span>{items[0].medication.name} (+{items.length - 1})</span>
+        )
+      },
     },
     {
-      accessorKey: "units",
+      id: "units",
       header: "Uds.",
       cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("units")}</span>
+        <span className="font-medium">
+          {row.original.items.reduce((s, i) => s + i.units, 0)}
+        </span>
       ),
     },
     {
@@ -184,9 +208,9 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
         <Select value={selectedHospitalId} onValueChange={setSelectedHospitalId}>
-          <SelectTrigger className="w-[250px]">
+          <SelectTrigger className="w-full sm:w-[250px]">
             <SelectValue placeholder="Filtrar por hospital" />
           </SelectTrigger>
           <SelectContent>
@@ -231,6 +255,24 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
         data={filteredLoans}
         enableRowSelection
       />
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar devolución</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a marcar {selectedLoanIds.length} préstamo(s) como devuelto(s).
+              Esta acción se puede deshacer desde el detalle de cada préstamo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBulkMarkReturned}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

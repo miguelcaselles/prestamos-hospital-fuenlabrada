@@ -18,34 +18,45 @@ export async function createLoan(data: LoanFormValues) {
       referenceNumber,
       type: validated.type,
       hospitalId: validated.hospitalId,
-      medicationId: validated.medicationId,
-      units: validated.units,
       emailSentTo: validated.emailSentTo,
       notes: validated.notes || null,
+      pharmacistName: validated.pharmacistName || null,
+      items: {
+        create: validated.items.map((item) => ({
+          medicationId: item.medicationId,
+          units: item.units,
+        })),
+      },
     },
-    include: { hospital: true, medication: true },
+    include: {
+      hospital: true,
+      items: { include: { medication: true } },
+    },
   })
 
-  // Generate PDF and send email
-  try {
-    const pdfBuffer = await generateLoanPDF(loan)
+  // Generate PDF and send email only for SOLICITADO loans
+  if (loan.type === "SOLICITADO" && loan.emailSentTo) {
+    try {
+      const pdfBuffer = await generateLoanPDF(loan)
 
-    await sendLoanEmail({
-      to: loan.emailSentTo!,
-      referenceNumber: loan.referenceNumber,
-      loanType: LOAN_TYPE_LABELS[loan.type],
-      hospitalName: loan.hospital.name,
-      medicationName: loan.medication.name,
-      units: loan.units,
-      pdfBuffer,
-    })
-  } catch (error) {
-    console.error("Error generating PDF or sending email:", error)
+      await sendLoanEmail({
+        to: loan.emailSentTo,
+        referenceNumber: loan.referenceNumber,
+        loanType: LOAN_TYPE_LABELS[loan.type],
+        hospitalName: loan.hospital.name,
+        itemCount: loan.items.length,
+        medicationNames: loan.items.map((i: { medication: { name: string } }) => i.medication.name),
+        pdfBuffer,
+      })
+    } catch (error) {
+      console.error("Error generating PDF or sending email:", error)
+    }
   }
 
   revalidatePath("/prestamos")
   revalidatePath("/dashboard")
   revalidatePath("/pendientes")
+  revalidatePath("/estadisticas")
 
   return { success: true, referenceNumber: loan.referenceNumber, id: loan.id }
 }
@@ -58,6 +69,7 @@ export async function toggleFarmatools(id: string, gestionado: boolean) {
 
   revalidatePath("/prestamos")
   revalidatePath("/dashboard")
+  revalidatePath("/estadisticas")
   revalidatePath(`/prestamos/${id}`)
 
   return loan
@@ -72,6 +84,7 @@ export async function toggleDevuelto(id: string, devuelto: boolean) {
   revalidatePath("/prestamos")
   revalidatePath("/dashboard")
   revalidatePath("/pendientes")
+  revalidatePath("/estadisticas")
   revalidatePath(`/prestamos/${id}`)
 
   return loan
@@ -86,6 +99,22 @@ export async function bulkMarkReturned(loanIds: string[]) {
   revalidatePath("/prestamos")
   revalidatePath("/dashboard")
   revalidatePath("/pendientes")
+  revalidatePath("/estadisticas")
+}
+
+export async function bulkDeleteLoans(loanIds: string[]) {
+  if (loanIds.length === 0) return { deleted: 0 }
+
+  const result = await prisma.loan.deleteMany({
+    where: { id: { in: loanIds } },
+  })
+
+  revalidatePath("/prestamos")
+  revalidatePath("/dashboard")
+  revalidatePath("/pendientes")
+  revalidatePath("/estadisticas")
+
+  return { deleted: result.count }
 }
 
 export async function updateLoanNotes(id: string, notes: string) {
@@ -127,13 +156,16 @@ export async function getLoans(filters?: {
     where.OR = [
       { referenceNumber: { contains: filters.search, mode: "insensitive" } },
       { hospital: { name: { contains: filters.search, mode: "insensitive" } } },
-      { medication: { name: { contains: filters.search, mode: "insensitive" } } },
+      { items: { some: { medication: { name: { contains: filters.search, mode: "insensitive" } } } } },
     ]
   }
 
   return prisma.loan.findMany({
     where,
-    include: { hospital: true, medication: true },
+    include: {
+      hospital: true,
+      items: { include: { medication: true } },
+    },
     orderBy: { createdAt: "desc" },
   })
 }
@@ -141,6 +173,9 @@ export async function getLoans(filters?: {
 export async function getLoan(id: string) {
   return prisma.loan.findUnique({
     where: { id },
-    include: { hospital: true, medication: true },
+    include: {
+      hospital: true,
+      items: { include: { medication: true } },
+    },
   })
 }

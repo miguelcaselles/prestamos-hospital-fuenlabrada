@@ -84,7 +84,7 @@ export function ToggleableStatusBadges({
             type="button"
             onClick={handleToggleFarmatools}
             disabled={isFarmatoolsPending}
-            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full"
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded-full"
           >
             <Badge
               variant="outline"
@@ -108,7 +108,7 @@ export function ToggleableStatusBadges({
             type="button"
             onClick={handleToggleDevuelto}
             disabled={isDevueltoPending}
-            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full"
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded-full"
           >
             <Badge
               variant="outline"

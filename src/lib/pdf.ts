@@ -3,28 +3,172 @@ import path from "path"
 import fs from "fs"
 import { LOAN_TYPE_LABELS } from "./constants"
 
+// --- Colors ---
+const BLUE = "#009AD7"
+const BLUE_DARK = "#00729E"
+const BLUE_LIGHT = "#E8F4FA"
+const BLUE_TABLE_HEADER = "#009AD7"
+const GRAY = "#666666"
+const GRAY_LIGHT = "#F5F5F5"
+const GRAY_BORDER = "#DDDDDD"
+const BLACK = "#1A1A1A"
+const WHITE = "#FFFFFF"
+
+// --- Logo helper ---
+function getLogoPath(): string {
+  return path.join(process.cwd(), "public", "logo_HUF.png")
+}
+
+function drawLogo(doc: PDFKit.PDFDocument, x: number, y: number, width: number) {
+  const logoPath = getLogoPath()
+  if (fs.existsSync(logoPath)) {
+    doc.image(logoPath, x, y, { width })
+  }
+}
+
+// --- Shared header for portrait PDFs ---
+function drawPortraitHeader(doc: PDFKit.PDFDocument) {
+  const pageWidth = 595.28 // A4 portrait width in points
+  const margin = 50
+
+  // Logo centered
+  const logoWidth = 260
+  const logoHeight = logoWidth * (229 / 1155) // maintain aspect ratio
+  const logoX = (pageWidth - logoWidth) / 2
+  drawLogo(doc, logoX, 35, logoWidth)
+
+  // "Servicio de Farmacia" subtitle
+  const subtitleY = 35 + logoHeight + 6
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor(GRAY)
+    .text("Servicio de Farmacia", margin, subtitleY, {
+      width: pageWidth - margin * 2,
+      align: "center",
+    })
+
+  // Separator line
+  const lineY = subtitleY + 18
+  doc
+    .moveTo(margin, lineY)
+    .lineTo(pageWidth - margin, lineY)
+    .strokeColor(BLUE)
+    .lineWidth(1.5)
+    .stroke()
+
+  doc.lineWidth(1) // reset
+
+  return lineY + 10
+}
+
+// --- Shared header for landscape PDFs ---
+function drawLandscapeHeader(doc: PDFKit.PDFDocument) {
+  const pageWidth = 841.89 // A4 landscape width in points
+  const margin = 50
+
+  // Logo on the left
+  const logoWidth = 200
+  const logoHeight = logoWidth * (229 / 1155)
+  drawLogo(doc, margin, 30, logoWidth)
+
+  // "Servicio de Farmacia" right-aligned
+  const textX = pageWidth - margin - 200
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor(GRAY)
+    .text("Servicio de Farmacia", textX, 38, {
+      width: 200,
+      align: "right",
+    })
+
+  // Date right-aligned
+  doc
+    .fontSize(8)
+    .text(
+      new Date().toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
+      textX,
+      52,
+      { width: 200, align: "right" }
+    )
+
+  // Separator
+  const lineY = 30 + logoHeight + 10
+  doc
+    .moveTo(margin, lineY)
+    .lineTo(pageWidth - margin, lineY)
+    .strokeColor(BLUE)
+    .lineWidth(1.5)
+    .stroke()
+
+  doc.lineWidth(1)
+
+  return lineY + 10
+}
+
+// --- Shared footer ---
+function drawFooter(
+  doc: PDFKit.PDFDocument,
+  pageWidth: number,
+  pageHeight: number,
+  margin: number
+) {
+  const footerY = pageHeight - margin
+  doc
+    .moveTo(margin, footerY - 12)
+    .lineTo(pageWidth - margin, footerY - 12)
+    .strokeColor(GRAY_BORDER)
+    .lineWidth(0.5)
+    .stroke()
+
+  doc
+    .fontSize(7)
+    .font("Helvetica")
+    .fillColor(GRAY)
+    .text(
+      "Hospital Universitario de Fuenlabrada  ·  Camino del Molino, 2  ·  28942 Fuenlabrada (Madrid)",
+      margin,
+      footerY - 4,
+      { align: "center", width: pageWidth - margin * 2, height: 10, lineBreak: false }
+    )
+
+  doc.lineWidth(1)
+}
+
+// =============================================
+// INDIVIDUAL LOAN PDF
+// =============================================
+
 interface LoanForPDF {
   referenceNumber: string
   type: "SOLICITADO" | "PRESTADO"
-  units: number
   notes: string | null
+  pharmacistName: string | null
   createdAt: Date
   hospital: {
     name: string
   }
-  medication: {
-    name: string
-    nationalCode: string | null
-    presentation: string | null
-    activeIngredient: string | null
-  }
+  items: Array<{
+    units: number
+    medication: {
+      name: string
+      nationalCode: string | null
+      presentation: string | null
+      activeIngredient: string | null
+    }
+  }>
 }
 
 export async function generateLoanPDF(loan: LoanForPDF): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "A4",
-      margin: 50,
+      margins: { top: 50, bottom: 30, left: 50, right: 50 },
       info: {
         Title: `Préstamo ${loan.referenceNumber}`,
         Author: "Hospital Universitario de Fuenlabrada",
@@ -36,115 +180,322 @@ export async function generateLoanPDF(loan: LoanForPDF): Promise<Buffer> {
     doc.on("end", () => resolve(Buffer.concat(chunks)))
     doc.on("error", reject)
 
+    const pageWidth = 595.28
+    const margin = 50
+    const contentWidth = pageWidth - margin * 2
+
     // --- HEADER ---
-    const logoPath = path.join(process.cwd(), "public", "logo-fuenlabrada.png")
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 50, 30, { width: 80 })
-    }
-
-    doc
-      .fontSize(16)
-      .font("Helvetica-Bold")
-      .text("HOSPITAL UNIVERSITARIO DE FUENLABRADA", 140, 45, { width: 400 })
-    doc.fontSize(10).font("Helvetica").text("Servicio de Farmacia", 140, 68)
-
-    doc.moveTo(50, 100).lineTo(545, 100).stroke()
+    let y = drawPortraitHeader(doc)
 
     // --- DOCUMENT TITLE ---
-    doc.moveDown(2)
+    y += 12
+    // Title background box
+    doc
+      .roundedRect(margin, y, contentWidth, 36, 4)
+      .fill(BLUE)
+
     doc
       .fontSize(14)
       .font("Helvetica-Bold")
-      .text("DOCUMENTO DE PRESTAMO DE MEDICAMENTOS", { align: "center" })
+      .fillColor(WHITE)
+      .text("DOCUMENTO DE PRÉSTAMO DE MEDICAMENTOS", margin, y + 10, {
+        width: contentWidth,
+        align: "center",
+      })
 
-    doc.moveDown(1)
-    doc
-      .fontSize(11)
-      .font("Helvetica")
-      .text(`Referencia: ${loan.referenceNumber}`, { align: "center" })
-    doc.text(
-      `Fecha: ${loan.createdAt.toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })}`,
-      { align: "center" }
-    )
+    // --- REFERENCE & DATE ROW ---
+    y += 50
+    doc.fillColor(BLACK)
 
-    // --- LOAN TYPE ---
-    doc.moveDown(1.5)
+    // Loan type badge
     const typeLabel = LOAN_TYPE_LABELS[loan.type]
-    doc.fontSize(12).font("Helvetica-Bold").text(`Tipo: ${typeLabel}`, 50)
+    const badgeColor = loan.type === "SOLICITADO" ? "#7C3AED" : "#0891B2"
+    const badgeWidth = 200
+    const badgeX = margin
+    doc.roundedRect(badgeX, y, badgeWidth, 22, 3).fill(badgeColor)
+    doc
+      .fontSize(9)
+      .font("Helvetica-Bold")
+      .fillColor(WHITE)
+      .text(typeLabel.toUpperCase(), badgeX, y + 6, {
+        width: badgeWidth,
+        align: "center",
+      })
+
+    // Reference on the right
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor(BLUE_DARK)
+      .text(loan.referenceNumber, margin, y + 4, {
+        width: contentWidth,
+        align: "right",
+      })
+
+    // Date
+    y += 30
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .fillColor(GRAY)
+      .text(
+        `Fecha: ${loan.createdAt.toLocaleDateString("es-ES", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })} a las ${loan.createdAt.toLocaleTimeString("es-ES", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+        margin,
+        y,
+        { width: contentWidth, align: "right" }
+      )
 
     // --- DETAILS TABLE ---
-    doc.moveDown(1)
-    const col1 = 50
-    const col2 = 220
+    y += 28
+    const col1 = margin
+    const labelWidth = 150
+    const col2 = margin + labelWidth
+    const valueWidth = contentWidth - labelWidth
+    const rowHeight = 28
 
-    const rows = [
-      ["Hospital:", loan.hospital.name],
-      ["Medicamento:", loan.medication.name],
-      ["Codigo Nacional:", loan.medication.nationalCode || "N/A"],
-      ["Presentacion:", loan.medication.presentation || "N/A"],
-      ["Principio Activo:", loan.medication.activeIngredient || "N/A"],
-      ["Unidades:", String(loan.units)],
-    ]
+    if (loan.items.length === 1) {
+      const med = loan.items[0].medication
+      const rows: [string, string][] = [
+        ["Hospital", loan.hospital.name],
+        ...(loan.pharmacistName ? [["Farmacéutico", loan.pharmacistName] as [string, string]] : []),
+        ["Medicamento", med.name],
+        ["Código Nacional", med.nationalCode || "—"],
+        ["Presentación", med.presentation || "—"],
+        ["Principio Activo", med.activeIngredient || "—"],
+        ["Unidades", String(loan.items[0].units)],
+      ]
 
-    let y = doc.y
-    for (const [label, value] of rows) {
-      doc.fontSize(10).font("Helvetica-Bold").text(label, col1, y)
-      doc.font("Helvetica").text(value, col2, y)
+      for (let i = 0; i < rows.length; i++) {
+        const [label, value] = rows[i]
+        const rowY = y + i * rowHeight
+
+        if (i % 2 === 0) {
+          doc.rect(col1, rowY, contentWidth, rowHeight).fill(GRAY_LIGHT)
+        }
+
+        doc
+          .moveTo(col1, rowY + rowHeight)
+          .lineTo(col1 + contentWidth, rowY + rowHeight)
+          .strokeColor(GRAY_BORDER)
+          .lineWidth(0.5)
+          .stroke()
+
+        doc
+          .fontSize(9)
+          .font("Helvetica-Bold")
+          .fillColor(BLUE_DARK)
+          .text(label, col1 + 10, rowY + 8, { width: labelWidth - 10 })
+
+        if (label === "Unidades") {
+          doc
+            .fontSize(11)
+            .font("Helvetica-Bold")
+            .fillColor(BLACK)
+            .text(value, col2, rowY + 7, { width: valueWidth })
+        } else {
+          doc
+            .fontSize(9)
+            .font("Helvetica")
+            .fillColor(BLACK)
+            .text(value, col2, rowY + 8, { width: valueWidth })
+        }
+      }
+
+      doc.lineWidth(1)
+      y += rows.length * rowHeight + 16
+    } else {
+      // Multiple items — Hospital row
+      doc.rect(col1, y, contentWidth, rowHeight).fill(GRAY_LIGHT)
+      doc
+        .moveTo(col1, y + rowHeight)
+        .lineTo(col1 + contentWidth, y + rowHeight)
+        .strokeColor(GRAY_BORDER)
+        .lineWidth(0.5)
+        .stroke()
+      doc
+        .fontSize(9)
+        .font("Helvetica-Bold")
+        .fillColor(BLUE_DARK)
+        .text("Hospital", col1 + 10, y + 8, { width: labelWidth - 10 })
+      doc
+        .fontSize(9)
+        .font("Helvetica")
+        .fillColor(BLACK)
+        .text(loan.hospital.name, col2, y + 8, { width: valueWidth })
+
+      y += rowHeight
+
+      // Pharmacist row (if present)
+      if (loan.pharmacistName) {
+        doc
+          .moveTo(col1, y + rowHeight)
+          .lineTo(col1 + contentWidth, y + rowHeight)
+          .strokeColor(GRAY_BORDER)
+          .lineWidth(0.5)
+          .stroke()
+        doc
+          .fontSize(9)
+          .font("Helvetica-Bold")
+          .fillColor(BLUE_DARK)
+          .text("Farmacéutico", col1 + 10, y + 8, { width: labelWidth - 10 })
+        doc
+          .fontSize(9)
+          .font("Helvetica")
+          .fillColor(BLACK)
+          .text(loan.pharmacistName, col2, y + 8, { width: valueWidth })
+        y += rowHeight
+      }
+
+      y += 12
+
+      // Medications sub-table
+      doc
+        .fontSize(10)
+        .font("Helvetica-Bold")
+        .fillColor(BLUE_DARK)
+        .text("Medicamentos", col1, y)
+      y += 18
+
+      const medCols = [
+        { header: "Medicamento", width: 160 },
+        { header: "Presentación", width: 120 },
+        { header: "P. Activo", width: 130 },
+        { header: "Uds.", width: contentWidth - 160 - 120 - 130 },
+      ]
+
+      doc.roundedRect(col1, y, contentWidth, 22, 3).fill(BLUE_TABLE_HEADER)
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(WHITE)
+      let hx = col1
+      for (const mc of medCols) {
+        doc.text(mc.header, hx + 6, y + 6, { width: mc.width - 12 })
+        hx += mc.width
+      }
       y += 24
+
+      for (let i = 0; i < loan.items.length; i++) {
+        const item = loan.items[i]
+        if (i % 2 === 0) {
+          doc.rect(col1, y, contentWidth, rowHeight).fill(GRAY_LIGHT)
+        }
+        doc
+          .moveTo(col1, y + rowHeight)
+          .lineTo(col1 + contentWidth, y + rowHeight)
+          .strokeColor(GRAY_BORDER)
+          .lineWidth(0.3)
+          .stroke()
+
+        let rx = col1
+        doc.fontSize(8).font("Helvetica").fillColor(BLACK)
+        doc.text(item.medication.name, rx + 6, y + 8, { width: medCols[0].width - 12 })
+        rx += medCols[0].width
+        doc.text(item.medication.presentation || "—", rx + 6, y + 8, { width: medCols[1].width - 12 })
+        rx += medCols[1].width
+        doc.text(item.medication.activeIngredient || "—", rx + 6, y + 8, { width: medCols[2].width - 12 })
+        rx += medCols[2].width
+        doc.font("Helvetica-Bold").text(String(item.units), rx + 6, y + 8, { width: medCols[3].width - 12, align: "center" })
+
+        y += rowHeight
+      }
+
+      // Total row
+      const totalUnits = loan.items.reduce((s, it) => s + it.units, 0)
+      doc.roundedRect(col1, y + 2, contentWidth, 22, 3).fill(BLUE_LIGHT)
+      doc
+        .fontSize(9)
+        .font("Helvetica-Bold")
+        .fillColor(BLUE_DARK)
+        .text("TOTAL", col1 + 6, y + 7)
+      const totalColX = col1 + medCols[0].width + medCols[1].width + medCols[2].width
+      doc.text(String(totalUnits), totalColX + 6, y + 7, { width: medCols[3].width - 12, align: "center" })
+
+      y += 30
+      doc.lineWidth(1)
     }
 
     // --- NOTES ---
     if (loan.notes) {
-      doc.moveDown(1)
-      y = doc.y > y ? doc.y : y + 10
-      doc.fontSize(10).font("Helvetica-Bold").text("Observaciones:", col1, y)
       doc
+        .roundedRect(margin, y, contentWidth, 20, 3)
+        .fill(BLUE_LIGHT)
+
+      doc
+        .fontSize(9)
+        .font("Helvetica-Bold")
+        .fillColor(BLUE_DARK)
+        .text("Observaciones", margin + 10, y + 5)
+
+      y += 24
+      doc
+        .fontSize(9)
         .font("Helvetica")
-        .text(loan.notes, col1, y + 16, { width: 495 })
+        .fillColor(BLACK)
+        .text(loan.notes, margin + 10, y, {
+          width: contentWidth - 20,
+        })
+
+      y = doc.y + 10
     }
 
     // --- SIGNATURE AREAS ---
-    const sigY = 620
-    doc.moveTo(50, sigY).lineTo(250, sigY).stroke()
+    const sigY = Math.max(y + 60, 560)
+    const sigWidth = (contentWidth - 40) / 2
+
+    // Left signature
     doc
-      .fontSize(9)
-      .text("Firma Farmacia Solicitante", 50, sigY + 5, {
-        width: 200,
-        align: "center",
-      })
-
-    doc.moveTo(320, sigY).lineTo(545, sigY).stroke()
-    doc.text("Firma Farmacia Prestadora", 320, sigY + 5, {
-      width: 225,
-      align: "center",
-    })
-
-    // --- FOOTER ---
+      .moveTo(margin, sigY)
+      .lineTo(margin + sigWidth, sigY)
+      .strokeColor(GRAY_BORDER)
+      .stroke()
     doc
       .fontSize(8)
       .font("Helvetica")
-      .text(
-        "Hospital Universitario de Fuenlabrada - Camino del Molino, 2 - 28942 Fuenlabrada (Madrid)",
-        50,
-        750,
-        { align: "center", width: 495 }
-      )
+      .fillColor(GRAY)
+      .text("Firma Farmacia Solicitante", margin, sigY + 6, {
+        width: sigWidth,
+        align: "center",
+        lineBreak: false,
+      })
+
+    // Right signature
+    const rightSigX = pageWidth - margin - sigWidth
+    doc
+      .moveTo(rightSigX, sigY)
+      .lineTo(pageWidth - margin, sigY)
+      .strokeColor(GRAY_BORDER)
+      .stroke()
+    doc.text("Firma Farmacia Prestadora", rightSigX, sigY + 6, {
+      width: sigWidth,
+      align: "center",
+      lineBreak: false,
+    })
+
+    // --- FOOTER ---
+    drawFooter(doc, pageWidth, 841.89, margin) // A4 portrait height
 
     doc.end()
   })
 }
 
+// =============================================
+// PENDING LOANS LIST PDF
+// =============================================
+
 interface PendingLoanForPDF {
   referenceNumber: string
   type: "SOLICITADO" | "PRESTADO"
-  units: number
   createdAt: Date
   hospital: { name: string }
-  medication: { name: string }
+  items: Array<{
+    units: number
+    medication: { name: string }
+  }>
 }
 
 export async function generatePendingListPDF(
@@ -159,7 +510,7 @@ export async function generatePendingListPDF(
 
     const doc = new PDFDocument({
       size: "A4",
-      margin: 50,
+      margins: { top: 50, bottom: 30, left: 50, right: 50 },
       layout: "landscape",
       info: {
         Title: `Préstamos ${title}`,
@@ -172,107 +523,176 @@ export async function generatePendingListPDF(
     doc.on("end", () => resolve(Buffer.concat(chunks)))
     doc.on("error", reject)
 
+    const pageWidth = 841.89
+    const pageHeight = 595.28
+    const margin = 50
+    const tableWidth = pageWidth - margin * 2
+
     // --- HEADER ---
-    const logoPath = path.join(process.cwd(), "public", "logo-fuenlabrada.png")
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 50, 30, { width: 60 })
-    }
-
-    doc
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("HOSPITAL UNIVERSITARIO DE FUENLABRADA", 120, 40, { width: 400 })
-    doc.fontSize(9).font("Helvetica").text("Servicio de Farmacia", 120, 60)
-
-    doc.moveTo(50, 85).lineTo(792 - 50, 85).stroke()
+    let contentY = drawLandscapeHeader(doc)
 
     // --- TITLE ---
-    doc.moveDown(1)
+    contentY += 4
     doc
-      .fontSize(13)
-      .font("Helvetica-Bold")
-      .text(`LISTADO DE PRÉSTAMOS ${title}`, 50, 95, {
-        align: "center",
-        width: 792 - 100,
-      })
+      .roundedRect(margin, contentY, tableWidth, 30, 4)
+      .fill(BLUE)
 
     doc
-      .fontSize(9)
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .fillColor(WHITE)
+      .text(`LISTADO DE PRÉSTAMOS ${title}`, margin, contentY + 9, {
+        align: "center",
+        width: tableWidth,
+      })
+
+    contentY += 38
+    doc
+      .fontSize(8)
       .font("Helvetica")
+      .fillColor(GRAY)
       .text(
         `Fecha de generación: ${new Date().toLocaleDateString("es-ES", {
           day: "2-digit",
           month: "long",
           year: "numeric",
         })}  —  Total: ${loans.length} préstamo(s)`,
-        50,
-        115,
-        { align: "center", width: 792 - 100 }
+        margin,
+        contentY,
+        { align: "center", width: tableWidth }
       )
 
-    // --- TABLE HEADER ---
-    const tableTop = 145
-    const colX = [50, 150, 260, 520, 640]
-    const colW = [95, 105, 255, 115, 100]
-    const headers = ["Referencia", "Fecha", "Medicamento", "Hospital", "Uds."]
+    // --- TABLE CONFIGURATION ---
+    const colDefs = [
+      { header: "Referencia", width: 110, align: "left" as const },
+      { header: "Fecha", width: 80, align: "left" as const },
+      { header: "Medicamento", width: 270, align: "left" as const },
+      { header: "Hospital", width: 200, align: "left" as const },
+      { header: "Uds.", width: tableWidth - 110 - 80 - 270 - 200, align: "center" as const },
+    ]
 
-    // Header background
-    doc.rect(50, tableTop - 4, 792 - 100, 20).fill("#2563eb")
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#ffffff")
-    headers.forEach((h, i) => {
-      doc.text(h, colX[i] + 4, tableTop, { width: colW[i], align: i === 4 ? "center" : "left" })
-    })
+    const rowHeight = 22
+    const cellPadding = 6
+
+    function drawTableHeader(startY: number) {
+      // Header background
+      doc.roundedRect(margin, startY, tableWidth, rowHeight + 2, 3).fill(BLUE_TABLE_HEADER)
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(WHITE)
+
+      let x = margin
+      for (const col of colDefs) {
+        doc.text(col.header, x + cellPadding, startY + 6, {
+          width: col.width - cellPadding * 2,
+          align: col.align,
+        })
+        x += col.width
+      }
+
+      return startY + rowHeight + 4
+    }
+
+    // --- INITIAL TABLE HEADER ---
+    contentY += 18
+    let y = drawTableHeader(contentY)
 
     // --- TABLE ROWS ---
-    let y = tableTop + 22
-    doc.fillColor("#000000")
+    doc.fillColor(BLACK)
 
     for (let i = 0; i < loans.length; i++) {
       const loan = loans[i]
 
+      // Check for page break
+      if (y + rowHeight > pageHeight - margin - 40) {
+        drawFooter(doc, pageWidth, pageHeight, margin)
+        doc.addPage()
+        const newContentY = drawLandscapeHeader(doc)
+        y = drawTableHeader(newContentY + 4)
+      }
+
       // Alternate row background
       if (i % 2 === 0) {
-        doc.rect(50, y - 4, 792 - 100, 20).fill("#f0f4ff")
-        doc.fillColor("#000000")
+        doc.rect(margin, y, tableWidth, rowHeight).fill(GRAY_LIGHT)
+        doc.fillColor(BLACK)
       }
 
-      doc.fontSize(8).font("Helvetica-Bold").text(loan.referenceNumber, colX[0] + 4, y, { width: colW[0] })
-      doc.font("Helvetica")
+      // Row bottom border
+      doc
+        .moveTo(margin, y + rowHeight)
+        .lineTo(margin + tableWidth, y + rowHeight)
+        .strokeColor(GRAY_BORDER)
+        .lineWidth(0.3)
+        .stroke()
+
+      let x = margin
+
+      // Reference
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(BLUE_DARK)
+      doc.text(loan.referenceNumber, x + cellPadding, y + 6, {
+        width: colDefs[0].width - cellPadding * 2,
+      })
+      x += colDefs[0].width
+
+      doc.font("Helvetica").fillColor(BLACK)
+
+      // Date
       doc.text(
-        new Date(loan.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }),
-        colX[1] + 4, y, { width: colW[1] }
+        `${new Date(loan.createdAt).toLocaleDateString("es-ES", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })} ${new Date(loan.createdAt).toLocaleTimeString("es-ES", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+        x + cellPadding,
+        y + 6,
+        { width: colDefs[1].width - cellPadding * 2 }
       )
-      doc.text(loan.medication.name, colX[2] + 4, y, { width: colW[2] })
-      doc.text(loan.hospital.name, colX[3] + 4, y, { width: colW[3] })
-      doc.font("Helvetica-Bold").text(String(loan.units), colX[4] + 4, y, { width: colW[4], align: "center" })
+      x += colDefs[1].width
 
-      y += 20
+      // Medication
+      const medText = loan.items.length === 0 ? "—" : loan.items.length === 1 ? loan.items[0].medication.name : `${loan.items[0].medication.name} (+${loan.items.length - 1})`
+      doc.text(medText, x + cellPadding, y + 6, {
+        width: colDefs[2].width - cellPadding * 2,
+      })
+      x += colDefs[2].width
 
-      // New page if needed
-      if (y > 792 - 50 - 40) {
-        doc.addPage()
-        y = 50
-      }
+      // Hospital
+      doc.text(loan.hospital.name, x + cellPadding, y + 6, {
+        width: colDefs[3].width - cellPadding * 2,
+      })
+      x += colDefs[3].width
+
+      // Units
+      const itemUnits = loan.items.reduce((s, it) => s + it.units, 0)
+      doc.font("Helvetica-Bold").fillColor(BLACK)
+      doc.text(String(itemUnits), x + cellPadding, y + 6, {
+        width: colDefs[4].width - cellPadding * 2,
+        align: "center",
+      })
+
+      y += rowHeight
     }
 
     // --- TOTAL ROW ---
-    const totalUnits = loans.reduce((sum, l) => sum + l.units, 0)
-    doc.rect(50, y, 792 - 100, 22).fill("#e0e7ff")
-    doc.fillColor("#000000")
-    doc.fontSize(9).font("Helvetica-Bold").text("TOTAL", colX[0] + 4, y + 4, { width: colW[0] })
-    doc.text(String(totalUnits), colX[4] + 4, y + 4, { width: colW[4], align: "center" })
+    const totalUnits = loans.reduce((sum, l) => sum + l.items.reduce((s, it) => s + it.units, 0), 0)
+    doc.roundedRect(margin, y + 2, tableWidth, rowHeight + 2, 3).fill(BLUE_LIGHT)
+    doc.fillColor(BLUE_DARK)
+    doc
+      .fontSize(9)
+      .font("Helvetica-Bold")
+      .text("TOTAL", margin + cellPadding, y + 8, {
+        width: colDefs[0].width - cellPadding * 2,
+      })
+
+    const totalX = margin + colDefs[0].width + colDefs[1].width + colDefs[2].width + colDefs[3].width
+    doc.text(String(totalUnits), totalX + cellPadding, y + 8, {
+      width: colDefs[4].width - cellPadding * 2,
+      align: "center",
+    })
 
     // --- FOOTER ---
-    doc
-      .fontSize(7)
-      .font("Helvetica")
-      .fillColor("#666666")
-      .text(
-        "Hospital Universitario de Fuenlabrada - Camino del Molino, 2 - 28942 Fuenlabrada (Madrid)",
-        50,
-        792 - 50 - 15,
-        { align: "center", width: 792 - 100 }
-      )
+    drawFooter(doc, pageWidth, pageHeight, margin)
 
     doc.end()
   })

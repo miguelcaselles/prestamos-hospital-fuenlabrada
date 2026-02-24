@@ -10,10 +10,13 @@ export async function searchLoans(query: string) {
       OR: [
         { referenceNumber: { contains: query, mode: "insensitive" } },
         { hospital: { name: { contains: query, mode: "insensitive" } } },
-        { medication: { name: { contains: query, mode: "insensitive" } } },
+        { items: { some: { medication: { name: { contains: query, mode: "insensitive" } } } } },
       ],
     },
-    include: { hospital: true, medication: true },
+    include: {
+      hospital: true,
+      items: { include: { medication: true } },
+    },
     take: 10,
     orderBy: { createdAt: "desc" },
   })

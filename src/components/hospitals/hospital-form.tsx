@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { createHospital, updateHospital } from "@/actions/hospital-actions"
 import { toast } from "sonner"
-import { useTransition } from "react"
+import { useEffect, useTransition } from "react"
 import type { Hospital } from "@/types"
 
 interface HospitalFormProps {
@@ -41,12 +41,23 @@ export function HospitalForm({
   const form = useForm<HospitalFormValues>({
     resolver: zodResolver(hospitalFormSchema),
     defaultValues: {
-      name: hospital?.name ?? "",
-      email: hospital?.email ?? "",
-      address: hospital?.address ?? "",
-      phone: hospital?.phone ?? "",
+      name: "",
+      email: "",
+      address: "",
+      phone: "",
     },
   })
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: hospital?.name ?? "",
+        email: hospital?.email ?? "",
+        address: hospital?.address ?? "",
+        phone: hospital?.phone ?? "",
+      })
+    }
+  }, [open, hospital, form])
 
   function onSubmit(data: HospitalFormValues) {
     startTransition(async () => {

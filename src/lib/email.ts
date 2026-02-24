@@ -36,9 +36,21 @@ interface SendLoanEmailParams {
   referenceNumber: string
   loanType: string
   hospitalName: string
-  medicationName: string
-  units: number
+  itemCount: number
+  medicationNames: string[]
   pdfBuffer: Buffer
+}
+
+function getSpainGreeting(): string {
+  const now = new Date()
+  const spainHour = Number(
+    new Intl.DateTimeFormat("es-ES", {
+      timeZone: "Europe/Madrid",
+      hour: "numeric",
+      hour12: false,
+    }).format(now)
+  )
+  return spainHour < 14 ? "Buenos días" : "Buenas tardes"
 }
 
 export async function sendLoanEmail(params: SendLoanEmailParams) {
@@ -60,32 +72,20 @@ export async function sendLoanEmail(params: SendLoanEmailParams) {
   const fromEmail =
     settings?.fromEmail || process.env.SMTP_FROM_EMAIL || "noreply@example.com"
 
+  const greeting = getSpainGreeting()
+
+  const ccEmail = settings?.ccEmail || undefined
+
   await transporter.sendMail({
     from: `"${fromName}" <${fromEmail}>`,
     to: params.to,
-    subject: `Préstamo de medicamento - ${params.referenceNumber}`,
+    ...(ccEmail && { cc: ccEmail }),
+    subject: `Préstamo de medicamento${params.itemCount > 1 ? "s" : ""} - ${params.referenceNumber} - ${params.medicationNames.join(", ")}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1e40af;">Préstamo de Medicamento</h2>
-        <p>Se adjunta el documento de préstamo con referencia <strong>${params.referenceNumber}</strong>.</p>
-        <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
-          <tr>
-            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold; background: #f8fafc;">Tipo</td>
-            <td style="padding: 8px 12px; border: 1px solid #ddd;">${params.loanType}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold; background: #f8fafc;">Hospital</td>
-            <td style="padding: 8px 12px; border: 1px solid #ddd;">${params.hospitalName}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold; background: #f8fafc;">Medicamento</td>
-            <td style="padding: 8px 12px; border: 1px solid #ddd;">${params.medicationName}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 12px; border: 1px solid #ddd; font-weight: bold; background: #f8fafc;">Unidades</td>
-            <td style="padding: 8px 12px; border: 1px solid #ddd;">${params.units}</td>
-          </tr>
-        </table>
+        <p>${greeting},</p>
+        <p>Les envío el impreso del préstamo acordado por teléfono.</p>
+        <p>Un saludo</p>
         <p style="color: #666; font-size: 12px; margin-top: 24px; border-top: 1px solid #eee; padding-top: 12px;">
           Este mensaje ha sido generado automáticamente por el sistema de gestión de préstamos
           del Hospital Universitario de Fuenlabrada.
@@ -94,7 +94,7 @@ export async function sendLoanEmail(params: SendLoanEmailParams) {
     `,
     attachments: [
       {
-        filename: `prestamo-${params.referenceNumber}.pdf`,
+        filename: `prestamo-${params.referenceNumber}-${params.medicationNames.join("_").replace(/\s+/g, "_")}.pdf`,
         content: params.pdfBuffer,
         contentType: "application/pdf",
       },

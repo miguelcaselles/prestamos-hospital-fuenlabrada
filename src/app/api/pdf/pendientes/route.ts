@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
 
   const loans = await prisma.loan.findMany({
     where: { id: { in: loanIds } },
-    include: { hospital: true, medication: true },
-    orderBy: [{ hospital: { name: "asc" } }, { medication: { name: "asc" } }],
+    include: { hospital: true, items: { include: { medication: true } } },
+    orderBy: [{ hospital: { name: "asc" } }, { createdAt: "asc" }],
   })
 
   if (loans.length === 0) {

@@ -28,15 +28,16 @@ model Hospital {
 }
 
 model Medication {
-  id               String   @id @default(cuid())
+  id               String     @id @default(cuid())
   name             String
-  nationalCode     String?  @map("national_code")
+  nationalCode     String?    @map("national_code")
   presentation     String?
-  activeIngredient String?  @map("active_ingredient")
-  active           Boolean  @default(true)
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-  loans            Loan[]
+  activeIngredient String?    @map("active_ingredient")
+  active           Boolean    @default(true)
+  isAutoCreated    Boolean    @default(false) @map("is_auto_created")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  loanItems        LoanItem[]
 
   @@map("medications")
 }
@@ -47,19 +48,18 @@ model Loan {
   type                  LoanType
   hospitalId            String     @map("hospital_id")
   hospital              Hospital   @relation(fields: [hospitalId], references: [id])
-  medicationId          String     @map("medication_id")
-  medication            Medication @relation(fields: [medicationId], references: [id])
-  units                 Int
   farmatoolsGestionado  Boolean    @default(false) @map("farmatools_gestionado")
   devuelto              Boolean    @default(false)
   emailSentTo           String?    @map("email_sent_to")
   pdfUrl                String?    @map("pdf_url")
   notes                 String?
+  pharmacistName        String?    @map("pharmacist_name")
   createdAt             DateTime   @default(now()) @map("created_at")
   updatedAt             DateTime   @updatedAt @map("updated_at")
 
+  items                 LoanItem[]
+
   @@index([hospitalId])
-  @@index([medicationId])
   @@index([farmatoolsGestionado])
   @@index([devuelto])
   @@index([type])
@@ -67,8 +67,21 @@ model Loan {
   @@map("loans")
 }
 
+model LoanItem {
+  id           String     @id @default(cuid())
+  loanId       String     @map("loan_id")
+  loan         Loan       @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  medicationId String     @map("medication_id")
+  medication   Medication @relation(fields: [medicationId], references: [id])
+  units        Int
+
+  @@index([loanId])
+  @@index([medicationId])
+  @@map("loan_items")
+}
+
 model SmtpSettings {
-  id        String @id @default("default")
+  id        String  @id @default("default")
   host      String
   port      Int
   secure    Boolean @default(false)
@@ -76,6 +89,7 @@ model SmtpSettings {
   password  String
   fromName  String  @map("from_name")
   fromEmail String  @map("from_email")
+  ccEmail   String? @map("cc_email")
 
   @@map("smtp_settings")
 }

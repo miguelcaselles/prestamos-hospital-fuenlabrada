@@ -18,8 +18,20 @@ export type Medication = {
   presentation: string | null
   activeIngredient: string | null
   active: boolean
+  isAutoCreated: boolean
   createdAt: Date
   updatedAt: Date
+}
+
+export type LoanItem = {
+  id: string
+  loanId: string
+  medicationId: string
+  units: number
+}
+
+export type LoanItemWithMedication = LoanItem & {
+  medication: Medication
 }
 
 export type Loan = {
@@ -27,13 +39,12 @@ export type Loan = {
   referenceNumber: string
   type: LoanType
   hospitalId: string
-  medicationId: string
-  units: number
   farmatoolsGestionado: boolean
   devuelto: boolean
   emailSentTo: string | null
   pdfUrl: string | null
   notes: string | null
+  pharmacistName: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -47,9 +58,10 @@ export type SmtpSettings = {
   password: string
   fromName: string
   fromEmail: string
+  ccEmail: string | null
 }
 
 export type LoanWithRelations = Loan & {
   hospital: Hospital
-  medication: Medication
+  items: LoanItemWithMedication[]
 }
