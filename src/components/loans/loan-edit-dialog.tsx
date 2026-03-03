@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import {
   Form,
@@ -20,6 +21,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
@@ -31,10 +34,11 @@ import { Combobox } from "@/components/shared/combobox"
 import { MedicationSearch } from "@/components/loans/medication-search"
 import { updateLoan } from "@/actions/loan-actions"
 import { createMedicationQuick } from "@/actions/medication-actions"
+import { LOAN_TYPE_LABELS } from "@/lib/constants"
 import { toast } from "sonner"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Plus, Trash2 } from "lucide-react"
+import { Loader2, Plus, Trash2, Building2, Pill, Mail, User, StickyNote } from "lucide-react"
 import type { Hospital, Medication, LoanWithRelations } from "@/types"
 
 interface LoanEditDialogProps {
@@ -118,108 +122,142 @@ export function LoanEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Préstamo {loan.referenceNumber}</DialogTitle>
+          <div className="flex items-center gap-3">
+            <DialogTitle className="text-xl">
+              Editar Préstamo
+            </DialogTitle>
+            <Badge
+              variant="outline"
+              className={
+                loan.type === "SOLICITADO"
+                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                  : "bg-teal-50 text-teal-700 border-teal-200"
+              }
+            >
+              {LOAN_TYPE_LABELS[loan.type]}
+            </Badge>
+          </div>
+          <DialogDescription>
+            {loan.referenceNumber} &middot; {loan.hospital.name}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            {/* Hospital */}
-            <FormField
-              control={form.control}
-              name="hospitalId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hospital</FormLabel>
-                  <FormControl>
-                    <Combobox
-                      options={hospitalOptions}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Seleccionar hospital..."
-                      searchPlaceholder="Buscar hospital..."
-                      emptyMessage="No se encontraron hospitales."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Medications */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Hospital Section */}
             <div className="space-y-3">
-              <FormLabel className="text-base font-semibold">Medicamentos</FormLabel>
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-3 items-start">
-                  <FormField
-                    control={form.control}
-                    name={`items.${index}.medicationId`}
-                    render={({ field: medField }) => (
-                      <FormItem className="flex-1">
-                        <FormControl>
-                          <MedicationSearch
-                            medications={localMedications}
-                            value={medField.value}
-                            onValueChange={medField.onChange}
-                            onMedicationCreated={handleMedicationCreated}
-                            onCreateManual={(name) => handleCreateMedication(name, index)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`items.${index}.units`}
-                    render={({ field: unitsField }) => (
-                      <FormItem className="w-24">
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={1}
-                            placeholder="Cant."
-                            {...unitsField}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`items.${index}.unitType`}
-                    render={({ field: unitTypeField }) => (
-                      <FormItem className="w-28">
-                        <Select
-                          value={unitTypeField.value}
-                          onValueChange={unitTypeField.onChange}
-                        >
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Building2 className="h-4 w-4 text-gray-400" />
+                Hospital
+              </div>
+              <FormField
+                control={form.control}
+                name="hospitalId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Combobox
+                        options={hospitalOptions}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Seleccionar hospital..."
+                        searchPlaceholder="Buscar hospital..."
+                        emptyMessage="No se encontraron hospitales."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Medications Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Pill className="h-4 w-4 text-gray-400" />
+                Medicamentos
+              </div>
+              <div className="space-y-2">
+                {fields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 space-y-2"
+                  >
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.medicationId`}
+                      render={({ field: medField }) => (
+                        <FormItem>
                           <FormControl>
-                            <SelectTrigger size="sm">
-                              <SelectValue />
-                            </SelectTrigger>
+                            <MedicationSearch
+                              medications={localMedications}
+                              value={medField.value}
+                              onValueChange={medField.onChange}
+                              onMedicationCreated={handleMedicationCreated}
+                              onCreateManual={(name) => handleCreateMedication(name, index)}
+                            />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="UNIDADES">Uds.</SelectItem>
-                            <SelectItem value="CAJAS">Cajas</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-                  {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="mt-0.5 shrink-0"
-                      onClick={() => remove(index)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex items-center gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.units`}
+                        render={({ field: unitsField }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                placeholder="Cantidad"
+                                {...unitsField}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.unitType`}
+                        render={({ field: unitTypeField }) => (
+                          <FormItem className="w-32">
+                            <Select
+                              value={unitTypeField.value}
+                              onValueChange={unitTypeField.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="UNIDADES">Unidades</SelectItem>
+                                <SelectItem value="CAJAS">Cajas</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => remove(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
               {isCreatingMed && (
                 <p className="text-xs text-gray-500 flex items-center gap-1">
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -230,6 +268,7 @@ export function LoanEditDialog({
                 type="button"
                 variant="outline"
                 size="sm"
+                className="w-full border-dashed"
                 onClick={() => append({ medicationId: "", units: 1, unitType: "UNIDADES" })}
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -242,64 +281,79 @@ export function LoanEditDialog({
               )}
             </div>
 
-            {/* Email */}
-            <FormField
-              control={form.control}
-              name="emailSentTo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email de destino</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="farmacia@hospital.es"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Separator />
 
-            {/* Pharmacist Name */}
-            <FormField
-              control={form.control}
-              name="pharmacistName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Farmacéutico responsable (opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Nombre del farmacéutico"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Contact Info Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Mail className="h-4 w-4 text-gray-400" />
+                Información de contacto
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="emailSentTo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-gray-500">Email de destino</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="farmacia@hospital.es"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pharmacistName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-gray-500">Farmacéutico responsable</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Nombre del farmacéutico"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
-            {/* Notes */}
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observaciones (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Notas adicionales sobre el préstamo..."
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Separator />
+
+            {/* Notes Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <StickyNote className="h-4 w-4 text-gray-400" />
+                Observaciones
+              </div>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Notas adicionales sobre el préstamo..."
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Submit */}
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-2 border-t">
               <Button
                 type="button"
                 variant="outline"

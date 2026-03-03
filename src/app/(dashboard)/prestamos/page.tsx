@@ -1,5 +1,6 @@
 import { getLoans } from "@/actions/loan-actions"
 import { getHospitals } from "@/actions/hospital-actions"
+import { getMedications } from "@/actions/medication-actions"
 import { LoanTable } from "@/components/loans/loan-table"
 
 interface PageProps {
@@ -14,7 +15,7 @@ interface PageProps {
 
 export default async function PrestamosPage({ searchParams }: PageProps) {
   const params = await searchParams
-  const [loans, hospitals] = await Promise.all([
+  const [loans, hospitals, medications] = await Promise.all([
     getLoans({
       farmatools: params.farmatools,
       devuelto: params.devuelto,
@@ -23,7 +24,8 @@ export default async function PrestamosPage({ searchParams }: PageProps) {
       search: params.search,
     }),
     getHospitals(),
+    getMedications(),
   ])
 
-  return <LoanTable loans={loans} hospitals={hospitals} />
+  return <LoanTable loans={loans} hospitals={hospitals} medications={medications} />
 }

@@ -136,16 +136,24 @@ export function LoanDetail({ loan, hospitals, medications }: LoanDetailProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Editar
-          </Button>
-          <Link href={`/api/pdf/${loan.id}`} target="_blank">
-            <Button variant="outline">
-              <FileDown className="mr-2 h-4 w-4" />
-              Descargar PDF
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Editar préstamo</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={`/api/pdf/${loan.id}`} target="_blank">
+                <Button variant="outline" size="icon">
+                  <FileDown className="h-4 w-4" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Descargar PDF</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

@@ -25,26 +25,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { MoreHorizontal, Eye, FileDown, Download, Trash2 } from "lucide-react"
+import { MoreHorizontal, Eye, FileDown, Download, Trash2, Pencil } from "lucide-react"
 import { ToggleableStatusBadges } from "./toggleable-status-badges"
+import { LoanEditDialog } from "./loan-edit-dialog"
 import { LoanFilters } from "./loan-filters"
 import { LOAN_TYPE_LABELS } from "@/lib/constants"
 import { bulkDeleteLoans } from "@/actions/loan-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import type { LoanWithRelations, Hospital } from "@/types"
+import type { LoanWithRelations, Hospital, Medication } from "@/types"
 
 interface LoanTableProps {
   loans: LoanWithRelations[]
   hospitals: Hospital[]
+  medications: Medication[]
 }
 
-export function LoanTable({ loans, hospitals }: LoanTableProps) {
+export function LoanTable({ loans, hospitals, medications }: LoanTableProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [selectedLoans, setSelectedLoans] = useState<LoanWithRelations[]>([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [editingLoan, setEditingLoan] = useState<LoanWithRelations | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const exportUrl = `/api/loans/export${searchParams.toString() ? `?${searchParams.toString()}` : ""}`
@@ -197,6 +200,10 @@ export function LoanTable({ loans, hospitals }: LoanTableProps) {
                   Ver detalle
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditingLoan(loan)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link
@@ -276,6 +283,18 @@ export function LoanTable({ loans, hospitals }: LoanTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {editingLoan && (
+        <LoanEditDialog
+          loan={editingLoan}
+          hospitals={hospitals}
+          medications={medications}
+          open={!!editingLoan}
+          onOpenChange={(open) => {
+            if (!open) setEditingLoan(null)
+          }}
+        />
+      )}
     </div>
   )
 }
