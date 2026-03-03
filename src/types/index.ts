@@ -1,4 +1,5 @@
 export type LoanType = "SOLICITADO" | "PRESTADO"
+export type UnitType = "UNIDADES" | "CAJAS"
 
 export type Hospital = {
   id: string
@@ -28,6 +29,7 @@ export type LoanItem = {
   loanId: string
   medicationId: string
   units: number
+  unitType: UnitType
 }
 
 export type LoanItemWithMedication = LoanItem & {

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { generateReferenceNumber } from "@/lib/reference"
 import { generateLoanPDF } from "@/lib/pdf"
 import { sendLoanEmail } from "@/lib/email"
-import { loanFormSchema, LoanFormValues } from "@/lib/validators"
+import { loanFormSchema, loanEditSchema, LoanFormValues, LoanEditValues } from "@/lib/validators"
 import { LOAN_TYPE_LABELS } from "@/lib/constants"
 import { revalidatePath } from "next/cache"
 
@@ -25,6 +25,7 @@ export async function createLoan(data: LoanFormValues) {
         create: validated.items.map((item) => ({
           medicationId: item.medicationId,
           units: item.units,
+          unitType: item.unitType,
         })),
       },
     },
@@ -115,6 +116,45 @@ export async function bulkDeleteLoans(loanIds: string[]) {
   revalidatePath("/estadisticas")
 
   return { deleted: result.count }
+}
+
+export async function updateLoan(id: string, data: LoanEditValues) {
+  const validated = loanEditSchema.parse(data)
+
+  const loan = await prisma.$transaction(async (tx) => {
+    // Delete existing items
+    await tx.loanItem.deleteMany({ where: { loanId: id } })
+
+    // Update loan and create new items
+    return tx.loan.update({
+      where: { id },
+      data: {
+        hospitalId: validated.hospitalId,
+        emailSentTo: validated.emailSentTo,
+        pharmacistName: validated.pharmacistName || null,
+        notes: validated.notes || null,
+        items: {
+          create: validated.items.map((item) => ({
+            medicationId: item.medicationId,
+            units: item.units,
+            unitType: item.unitType,
+          })),
+        },
+      },
+      include: {
+        hospital: true,
+        items: { include: { medication: true } },
+      },
+    })
+  })
+
+  revalidatePath("/prestamos")
+  revalidatePath("/dashboard")
+  revalidatePath("/pendientes")
+  revalidatePath("/estadisticas")
+  revalidatePath(`/prestamos/${id}`)
+
+  return { success: true, id: loan.id }
 }
 
 export async function updateLoanNotes(id: string, notes: string) {

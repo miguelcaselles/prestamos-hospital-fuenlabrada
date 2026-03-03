@@ -15,6 +15,13 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Combobox } from "@/components/shared/combobox"
 import { MedicationSearch } from "@/components/loans/medication-search"
 import { createLoan } from "@/actions/loan-actions"
@@ -42,7 +49,7 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
     defaultValues: {
       type: undefined,
       hospitalId: "",
-      items: [{ medicationId: "", units: 1 }],
+      items: [{ medicationId: "", units: 1, unitType: "UNIDADES" as const }],
       emailSentTo: "",
       pharmacistName: "",
       notes: "",
@@ -256,11 +263,33 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
                       <Input
                         type="number"
                         min={1}
-                        placeholder="Uds."
+                        placeholder="Cant."
                         {...unitsField}
                       />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`items.${index}.unitType`}
+                render={({ field: unitTypeField }) => (
+                  <FormItem className="w-28">
+                    <Select
+                      value={unitTypeField.value}
+                      onValueChange={unitTypeField.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="UNIDADES">Uds.</SelectItem>
+                        <SelectItem value="CAJAS">Cajas</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />
@@ -287,7 +316,7 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ medicationId: "", units: 1 })}
+            onClick={() => append({ medicationId: "", units: 1, unitType: "UNIDADES" })}
           >
             <Plus className="mr-2 h-4 w-4" />
             Añadir medicamento

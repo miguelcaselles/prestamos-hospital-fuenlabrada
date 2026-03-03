@@ -1,7 +1,7 @@
 import PDFDocument from "pdfkit"
 import path from "path"
 import fs from "fs"
-import { LOAN_TYPE_LABELS } from "./constants"
+import { LOAN_TYPE_LABELS, getUnitTypeLabel } from "./constants"
 
 // --- Colors ---
 const BLUE = "#009AD7"
@@ -155,6 +155,7 @@ interface LoanForPDF {
   }
   items: Array<{
     units: number
+    unitType: string
     medication: {
       name: string
       nationalCode: string | null
@@ -269,7 +270,7 @@ export async function generateLoanPDF(loan: LoanForPDF): Promise<Buffer> {
         ["Código Nacional", med.nationalCode || "—"],
         ["Presentación", med.presentation || "—"],
         ["Principio Activo", med.activeIngredient || "—"],
-        ["Unidades", String(loan.items[0].units)],
+        ["Cantidad", `${loan.items[0].units} ${getUnitTypeLabel(loan.items[0].unitType)}`],
       ]
 
       for (let i = 0; i < rows.length; i++) {
@@ -293,7 +294,7 @@ export async function generateLoanPDF(loan: LoanForPDF): Promise<Buffer> {
           .fillColor(BLUE_DARK)
           .text(label, col1 + 10, rowY + 8, { width: labelWidth - 10 })
 
-        if (label === "Unidades") {
+        if (label === "Cantidad") {
           doc
             .fontSize(11)
             .font("Helvetica-Bold")
@@ -366,8 +367,8 @@ export async function generateLoanPDF(loan: LoanForPDF): Promise<Buffer> {
       const medCols = [
         { header: "Medicamento", width: 160 },
         { header: "Presentación", width: 120 },
-        { header: "P. Activo", width: 130 },
-        { header: "Uds.", width: contentWidth - 160 - 120 - 130 },
+        { header: "P. Activo", width: 110 },
+        { header: "Cantidad", width: contentWidth - 160 - 120 - 110 },
       ]
 
       doc.roundedRect(col1, y, contentWidth, 22, 3).fill(BLUE_TABLE_HEADER)
@@ -399,13 +400,18 @@ export async function generateLoanPDF(loan: LoanForPDF): Promise<Buffer> {
         rx += medCols[1].width
         doc.text(item.medication.activeIngredient || "—", rx + 6, y + 8, { width: medCols[2].width - 12 })
         rx += medCols[2].width
-        doc.font("Helvetica-Bold").text(String(item.units), rx + 6, y + 8, { width: medCols[3].width - 12, align: "center" })
+        doc.font("Helvetica-Bold").text(`${item.units} ${getUnitTypeLabel(item.unitType)}`, rx + 6, y + 8, { width: medCols[3].width - 12, align: "center" })
 
         y += rowHeight
       }
 
       // Total row
-      const totalUnits = loan.items.reduce((s, it) => s + it.units, 0)
+      const totalByType: Record<string, number> = {}
+      for (const it of loan.items) {
+        const label = getUnitTypeLabel(it.unitType)
+        totalByType[label] = (totalByType[label] || 0) + it.units
+      }
+      const totalText = Object.entries(totalByType).map(([label, total]) => `${total} ${label}`).join(" + ")
       doc.roundedRect(col1, y + 2, contentWidth, 22, 3).fill(BLUE_LIGHT)
       doc
         .fontSize(9)
@@ -413,7 +419,7 @@ export async function generateLoanPDF(loan: LoanForPDF): Promise<Buffer> {
         .fillColor(BLUE_DARK)
         .text("TOTAL", col1 + 6, y + 7)
       const totalColX = col1 + medCols[0].width + medCols[1].width + medCols[2].width
-      doc.text(String(totalUnits), totalColX + 6, y + 7, { width: medCols[3].width - 12, align: "center" })
+      doc.text(totalText, totalColX + 6, y + 7, { width: medCols[3].width - 12, align: "center" })
 
       y += 30
       doc.lineWidth(1)
@@ -494,6 +500,7 @@ interface PendingLoanForPDF {
   hospital: { name: string }
   items: Array<{
     units: number
+    unitType: string
     medication: { name: string }
   }>
 }
@@ -568,7 +575,7 @@ export async function generatePendingListPDF(
       { header: "Fecha", width: 80, align: "left" as const },
       { header: "Medicamento", width: 270, align: "left" as const },
       { header: "Hospital", width: 200, align: "left" as const },
-      { header: "Uds.", width: tableWidth - 110 - 80 - 270 - 200, align: "center" as const },
+      { header: "Cantidad", width: tableWidth - 110 - 80 - 270 - 200, align: "center" as const },
     ]
 
     const rowHeight = 22
@@ -664,9 +671,14 @@ export async function generatePendingListPDF(
       x += colDefs[3].width
 
       // Units
-      const itemUnits = loan.items.reduce((s, it) => s + it.units, 0)
+      const pendingTotalByType: Record<string, number> = {}
+      for (const it of loan.items) {
+        const label = getUnitTypeLabel(it.unitType)
+        pendingTotalByType[label] = (pendingTotalByType[label] || 0) + it.units
+      }
+      const unitsText = Object.entries(pendingTotalByType).map(([label, total]) => `${total} ${label}`).join(" + ")
       doc.font("Helvetica-Bold").fillColor(BLACK)
-      doc.text(String(itemUnits), x + cellPadding, y + 6, {
+      doc.text(unitsText, x + cellPadding, y + 6, {
         width: colDefs[4].width - cellPadding * 2,
         align: "center",
       })
@@ -675,7 +687,14 @@ export async function generatePendingListPDF(
     }
 
     // --- TOTAL ROW ---
-    const totalUnits = loans.reduce((sum, l) => sum + l.items.reduce((s, it) => s + it.units, 0), 0)
+    const grandTotalByType: Record<string, number> = {}
+    for (const l of loans) {
+      for (const it of l.items) {
+        const label = getUnitTypeLabel(it.unitType)
+        grandTotalByType[label] = (grandTotalByType[label] || 0) + it.units
+      }
+    }
+    const grandTotalText = Object.entries(grandTotalByType).map(([label, total]) => `${total} ${label}`).join(" + ")
     doc.roundedRect(margin, y + 2, tableWidth, rowHeight + 2, 3).fill(BLUE_LIGHT)
     doc.fillColor(BLUE_DARK)
     doc
@@ -686,7 +705,7 @@ export async function generatePendingListPDF(
       })
 
     const totalX = margin + colDefs[0].width + colDefs[1].width + colDefs[2].width + colDefs[3].width
-    doc.text(String(totalUnits), totalX + cellPadding, y + 8, {
+    doc.text(grandTotalText, totalX + cellPadding, y + 8, {
       width: colDefs[4].width - cellPadding * 2,
       align: "center",
     })

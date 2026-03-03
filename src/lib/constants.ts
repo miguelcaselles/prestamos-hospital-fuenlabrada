@@ -8,6 +8,15 @@ export const LOAN_TYPE_DESCRIPTIONS: Record<string, string> = {
   PRESTADO: "Otro hospital nos solicita medicación",
 }
 
+export const UNIT_TYPE_LABELS: Record<string, string> = {
+  UNIDADES: "uds.",
+  CAJAS: "cajas",
+}
+
+export function getUnitTypeLabel(unitType: string): string {
+  return UNIT_TYPE_LABELS[unitType] || "uds."
+}
+
 export function getFarmatoolsLabel(gestionado: boolean): string {
   return gestionado
     ? "Gestionado en Farmatools"

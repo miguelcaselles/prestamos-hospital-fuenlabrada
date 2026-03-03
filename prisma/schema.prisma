@@ -13,6 +13,11 @@ enum LoanType {
   PRESTADO
 }
 
+enum UnitType {
+  UNIDADES
+  CAJAS
+}
+
 model Hospital {
   id        String   @id @default(cuid())
   name      String
@@ -74,6 +79,7 @@ model LoanItem {
   medicationId String     @map("medication_id")
   medication   Medication @relation(fields: [medicationId], references: [id])
   units        Int
+  unitType     UnitType   @default(UNIDADES) @map("unit_type")
 
   @@index([loanId])
   @@index([medicationId])

@@ -3,6 +3,7 @@ import { z } from "zod"
 const loanItemSchema = z.object({
   medicationId: z.string().min(1, "Seleccione un medicamento"),
   units: z.coerce.number().int().positive("Las unidades deben ser un número positivo"),
+  unitType: z.enum(["UNIDADES", "CAJAS"]),
 })
 
 export const loanFormSchema = z.object({
@@ -39,7 +40,16 @@ export const smtpSettingsSchema = z.object({
   ccEmail: z.string().email("Email de copia no válido").optional().or(z.literal("")),
 })
 
+export const loanEditSchema = z.object({
+  hospitalId: z.string().min(1, "Seleccione un hospital"),
+  items: z.array(loanItemSchema).min(1, "Debe añadir al menos un medicamento"),
+  emailSentTo: z.string().email("Introduzca un email válido"),
+  pharmacistName: z.string().optional(),
+  notes: z.string().optional(),
+})
+
 export type LoanFormValues = z.infer<typeof loanFormSchema>
+export type LoanEditValues = z.infer<typeof loanEditSchema>
 export type HospitalFormValues = z.infer<typeof hospitalFormSchema>
 export type MedicationFormValues = z.infer<typeof medicationFormSchema>
 export type SmtpSettingsValues = z.infer<typeof smtpSettingsSchema>

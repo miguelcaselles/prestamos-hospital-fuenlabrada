@@ -180,12 +180,22 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
     },
     {
       id: "units",
-      header: "Uds.",
-      cell: ({ row }) => (
-        <span className="font-medium">
-          {row.original.items.reduce((s, i) => s + i.units, 0)}
-        </span>
-      ),
+      header: "Cantidad",
+      cell: ({ row }) => {
+        const items = row.original.items
+        const allSameType = items.every((i) => i.unitType === items[0]?.unitType)
+        const total = items.reduce((s, i) => s + i.units, 0)
+        const label = items[0]?.unitType === "CAJAS" ? "cajas" : "uds."
+        if (allSameType) {
+          return <span className="font-medium">{total} {label}</span>
+        }
+        const uds = items.filter((i) => i.unitType !== "CAJAS").reduce((s, i) => s + i.units, 0)
+        const cajas = items.filter((i) => i.unitType === "CAJAS").reduce((s, i) => s + i.units, 0)
+        const parts = []
+        if (uds > 0) parts.push(`${uds} uds.`)
+        if (cajas > 0) parts.push(`${cajas} cajas`)
+        return <span className="font-medium">{parts.join(" + ")}</span>
+      },
     },
     {
       id: "status",

@@ -18,7 +18,9 @@ import {
   getFarmatoolsColor,
   getDevolucionLabel,
   getDevolucionColor,
+  getUnitTypeLabel,
 } from "@/lib/constants"
+import { LoanEditDialog } from "@/components/loans/loan-edit-dialog"
 import { updateLoanNotes, toggleFarmatools, toggleDevuelto } from "@/actions/loan-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
@@ -26,6 +28,7 @@ import { es } from "date-fns/locale"
 import {
   ArrowLeft,
   FileDown,
+  Pencil,
   Check,
   Save,
   Building2,
@@ -40,14 +43,17 @@ import {
   MousePointerClick,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { LoanWithRelations } from "@/types"
+import type { LoanWithRelations, Hospital, Medication } from "@/types"
 
 interface LoanDetailProps {
   loan: LoanWithRelations
+  hospitals: Hospital[]
+  medications: Medication[]
 }
 
-export function LoanDetail({ loan }: LoanDetailProps) {
+export function LoanDetail({ loan, hospitals, medications }: LoanDetailProps) {
   const [notes, setNotes] = useState(loan.notes || "")
+  const [editOpen, setEditOpen] = useState(false)
   const [isSavingNotes, startSaveNotes] = useTransition()
   const [optimisticFarmatools, setOptimisticFarmatools] = useState(loan.farmatoolsGestionado)
   const [optimisticDevuelto, setOptimisticDevuelto] = useState(loan.devuelto)
@@ -130,6 +136,10 @@ export function LoanDetail({ loan }: LoanDetailProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar
+          </Button>
           <Link href={`/api/pdf/${loan.id}`} target="_blank">
             <Button variant="outline">
               <FileDown className="mr-2 h-4 w-4" />
@@ -293,18 +303,28 @@ export function LoanDetail({ loan }: LoanDetailProps) {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold">{item.units}</p>
-                        <p className="text-xs text-gray-500">uds.</p>
+                        <p className="text-xs text-gray-500">{getUnitTypeLabel(item.unitType)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
-                {loan.items.length > 1 && (
-                  <div className="mt-2 text-right">
-                    <p className="text-sm text-gray-500">
-                      Total: <span className="font-bold text-lg">{loan.items.reduce((s, i) => s + i.units, 0)}</span> uds.
-                    </p>
-                  </div>
-                )}
+                {loan.items.length > 1 && (() => {
+                  const totalByType: Record<string, number> = {}
+                  for (const item of loan.items) {
+                    const label = getUnitTypeLabel(item.unitType)
+                    totalByType[label] = (totalByType[label] || 0) + item.units
+                  }
+                  const parts = Object.entries(totalByType).map(([label, total]) => (
+                    <span key={label}><span className="font-bold text-lg">{total}</span> {label}</span>
+                  ))
+                  return (
+                    <div className="mt-2 text-right">
+                      <p className="text-sm text-gray-500 flex items-center justify-end gap-2">
+                        Total: {parts}
+                      </p>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           </CardContent>
@@ -401,6 +421,13 @@ export function LoanDetail({ loan }: LoanDetailProps) {
         </CardContent>
       </Card>
 
+      <LoanEditDialog
+        loan={loan}
+        hospitals={hospitals}
+        medications={medications}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </div>
   )
 }

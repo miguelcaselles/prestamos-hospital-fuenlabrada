@@ -4,6 +4,7 @@ import {
   LOAN_TYPE_LABELS,
   getFarmatoolsLabel,
   getDevolucionLabel,
+  getUnitTypeLabel,
 } from "@/lib/constants"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -35,23 +36,32 @@ export async function GET(request: NextRequest) {
     "Tipo",
     "Hospital",
     "Medicamento",
-    "Unidades",
+    "Cantidad",
     "Farmatools",
     "Devolución",
     "Email",
   ]
 
-  const rows = loans.map((loan) => [
-    loan.referenceNumber,
-    format(new Date(loan.createdAt), "dd/MM/yyyy HH:mm", { locale: es }),
-    LOAN_TYPE_LABELS[loan.type] || loan.type,
-    loan.hospital.name,
-    loan.items.map((i: { medication: { name: string } }) => i.medication.name).join(" | "),
-    String(loan.items.reduce((s: number, i: { units: number }) => s + i.units, 0)),
-    getFarmatoolsLabel(loan.farmatoolsGestionado),
-    getDevolucionLabel(loan.devuelto, loan.type),
-    loan.emailSentTo || "",
-  ])
+  const rows = loans.map((loan) => {
+    const totalByType: Record<string, number> = {}
+    for (const i of loan.items) {
+      const label = getUnitTypeLabel(i.unitType)
+      totalByType[label] = (totalByType[label] || 0) + i.units
+    }
+    const quantityText = Object.entries(totalByType).map(([label, total]) => `${total} ${label}`).join(" + ")
+
+    return [
+      loan.referenceNumber,
+      format(new Date(loan.createdAt), "dd/MM/yyyy HH:mm", { locale: es }),
+      LOAN_TYPE_LABELS[loan.type] || loan.type,
+      loan.hospital.name,
+      loan.items.map((i: { medication: { name: string } }) => i.medication.name).join(" | "),
+      quantityText,
+      getFarmatoolsLabel(loan.farmatoolsGestionado),
+      getDevolucionLabel(loan.devuelto, loan.type),
+      loan.emailSentTo || "",
+    ]
+  })
 
   const csv = [
     headers.join(";"),
