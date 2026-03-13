@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedLoan - Branding Assets</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0F766E;
+            --primary-light: #14B8A6;
+            --primary-dark: #0D5D56;
+            --accent: #F0FDFA;
+            --surface: #FAFAFA;
+            --text-primary: #18181B;
+            --text-secondary: #71717A;
+            --white: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(180deg, #F8FFFE 0%, #FFFFFF 100%);
+            min-height: 100vh;
+            padding: 60px 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .asset-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 48px;
+            margin-bottom: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
+            border: 1px solid rgba(15, 118, 110, 0.06);
+        }
+
+        /* ============================================
+           LOGO PRINCIPAL
+        ============================================ */
+        .logo-main {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            position: relative;
+        }
+
+        .logo-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .logo-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+
+        .logo-name span {
+            color: var(--primary);
+        }
+
+        .logo-tagline {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+        }
+
+        /* ============================================
+           VARIANTES DE LOGO
+        ============================================ */
+        .logo-variants {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            margin-top: 40px;
+        }
+
+        .variant-box {
+            padding: 40px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 140px;
+        }
+
+        .variant-box.light {
+            background: var(--white);
+            border: 1px solid #E4E4E7;
+        }
+
+        .variant-box.dark {
+            background: var(--text-primary);
+        }
+
+        .variant-box.teal {
+            background: var(--primary);
+        }
+
+        /* ============================================
+           HEADER / APP BAR
+        ============================================ */
+        .header-preview {
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            border: 1px solid #E4E4E7;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: var(--white);
+            border-bottom: 1px solid #F4F4F5;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-logo {
+            width: 40px;
+            height: 40px;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+
+        .header-title span {
+            color: var(--primary);
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid #E4E4E7;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--primary-light);
+            background: var(--accent);
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* ============================================
+           HEADER VARIANTE CON FONDO TEAL
+        ============================================ */
+        .app-header-teal {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        .app-header-teal .header-title {
+            color: var(--white);
+        }
+
+        .app-header-teal .header-title span {
+            opacity: 0.7;
+        }
+
+        .app-header-teal .nav-item {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .app-header-teal .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+        }
+
+        .app-header-teal .nav-item.active {
+            background: var(--white);
+            color: var(--primary);
+        }
+
+        .app-header-teal .icon-btn {
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .app-header-teal .icon-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .app-header-teal .icon-btn svg {
+            color: var(--white);
+        }
+
+        /* ============================================
+           ICONO SOLO
+        ============================================ */
+        .icon-showcase {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 32px;
+        }
+
+        .icon-size {
+            text-align: center;
+        }
+
+        .icon-size svg {
+            margin-bottom: 12px;
+        }
+
+        .icon-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ============================================
+           PALETA DE COLORES
+        ============================================ */
+        .color-palette {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .color-swatch {
+            width: 120px;
+        }
+
+        .swatch-color {
+            width: 100%;
+            height: 80px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .swatch-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .swatch-hex {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'DM Sans', monospace;
+        }
+
+        /* ============================================
+           TIPOGRAFÍA
+        ============================================ */
+        .typography-showcase {
+            margin-top: 24px;
+        }
+
+        .type-sample {
+            margin-bottom: 24px;
+        }
+
+        .type-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .type-heading {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .type-subheading {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .type-body {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           MOCKUP MOBILE
+        ============================================ */
+        .mobile-frame {
+            width: 320px;
+            background: var(--white);
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 24px 48px rgba(0,0,0,0.08);
+            border: 8px solid var(--text-primary);
+            margin: 0 auto;
+        }
+
+        .mobile-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 20px;
+            background: var(--white);
+            border-bottom: 1px solid #F4F4F5;
+        }
+
+        .mobile-logo {
+            width: 32px;
+            height: 32px;
+        }
+
+        .mobile-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .mobile-title span {
+            color: var(--primary);
+        }
+
+        .mobile-content {
+            padding: 20px;
+            background: #FAFAFA;
+            min-height: 200px;
+        }
+
+        .mobile-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .mobile-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .mobile-card-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--accent);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        /* ============================================
+           LAYOUT SECTIONS
+        ============================================ */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .divider {
+            height: 1px;
+            background: #E4E4E7;
+            margin: 40px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- LOGOTIPO PRINCIPAL -->
+        <p class="section-title">Logotipo Principal</p>
+        <div class="asset-card">
+            <div class="logo-main">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Forma base: píldora/cápsula estilizada con flecha circular -->
+                        <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                        <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                        <!-- Flecha de intercambio circular -->
+                        <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <!-- Cruz médica sutil -->
+                        <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                        <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-name">Med<span>Loan</span></div>
+                    <div class="logo-tagline">Gestión de Préstamos de Medicación</div>
+                </div>
+            </div>
+
+            <div class="logo-variants">
+                <div class="variant-box light">
+                    <div class="logo-main" style="transform: scale(0.85);">
+                        <div class="logo-icon">
+                            <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                                <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                                <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                                <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                            </svg>
+                        </div>
+                        <div class="logo-text">
+                            <div class="logo-name">Med<span>Loan</span></div>
+                            <div class="logo-tagline">Gestión de Préstamos de Medicación</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="variant-box dark">
+                    <div class="logo-main" style="transform: scale(0.85);">
+                        <div class="logo-icon">
+                            <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="16" width="48" height="24" rx="12" fill="#14B8A6"/>
+                                <rect x="4" y="16" width="24" height="24" rx="12" fill="#2DD4BF"/>
+                                <path d="M35 24L41 28L35 32" stroke="#18181B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 32L15 28L21 24" stroke="#18181B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="25" y="25" width="6" height="2" rx="1" fill="#18181B" opacity="0.9"/>
+                                <rect x="27" y="23" width="2" height="6" rx="1" fill="#18181B" opacity="0.9"/>
+                            </svg>
+                        </div>
+                        <div class="logo-text">
+                            <div class="logo-name" style="color: #FFFFFF;">Med<span style="color: #14B8A6;">Loan</span></div>
+                            <div class="logo-tagline" style="color: #A1A1AA;">Gestión de Préstamos de Medicación</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="variant-box teal">
+                    <div class="logo-main" style="transform: scale(0.85);">
+                        <div class="logo-icon">
+                            <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="16" width="48" height="24" rx="12" fill="white"/>
+                                <rect x="4" y="16" width="24" height="24" rx="12" fill="rgba(255,255,255,0.6)"/>
+                                <path d="M35 24L41 28L35 32" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 32L15 28L21 24" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="25" y="25" width="6" height="2" rx="1" fill="#0F766E" opacity="0.9"/>
+                                <rect x="27" y="23" width="2" height="6" rx="1" fill="#0F766E" opacity="0.9"/>
+                            </svg>
+                        </div>
+                        <div class="logo-text">
+                            <div class="logo-name" style="color: #FFFFFF;">Med<span style="color: rgba(255,255,255,0.7);">Loan</span></div>
+                            <div class="logo-tagline" style="color: rgba(255,255,255,0.7);">Gestión de Préstamos de Medicación</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ICONOS -->
+        <p class="section-title">Icono / Favicon</p>
+        <div class="asset-card">
+            <div class="icon-showcase">
+                <div class="icon-size">
+                    <svg width="64" height="64" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                        <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                        <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                        <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                    </svg>
+                    <div class="icon-label">64×64</div>
+                </div>
+                <div class="icon-size">
+                    <svg width="48" height="48" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                        <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                        <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                        <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                    </svg>
+                    <div class="icon-label">48×48</div>
+                </div>
+                <div class="icon-size">
+                    <svg width="32" height="32" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                        <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                        <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                        <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                    </svg>
+                    <div class="icon-label">32×32</div>
+                </div>
+                <div class="icon-size">
+                    <svg width="24" height="24" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                        <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                        <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                        <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                    </svg>
+                    <div class="icon-label">24×24</div>
+                </div>
+                <div class="icon-size">
+                    <svg width="16" height="16" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                        <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                        <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                        <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                    </svg>
+                    <div class="icon-label">16×16</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HEADERS -->
+        <p class="section-title">Header / Barra de Navegación</p>
+        <div class="asset-card">
+            <!-- Header Claro -->
+            <div class="header-preview" style="margin-bottom: 32px;">
+                <div class="app-header">
+                    <div class="header-left">
+                        <div class="header-logo">
+                            <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                                <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                                <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                                <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                            </svg>
+                        </div>
+                        <div class="header-title">Med<span>Loan</span></div>
+                    </div>
+                    <nav class="header-nav">
+                        <button class="nav-item active">Dashboard</button>
+                        <button class="nav-item">Préstamos</button>
+                        <button class="nav-item">Inventario</button>
+                        <button class="nav-item">Historial</button>
+                    </nav>
+                    <div class="header-actions">
+                        <button class="icon-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                        <button class="icon-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                        </button>
+                        <div class="user-avatar">MG</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Teal -->
+            <div class="header-preview">
+                <div class="app-header-teal">
+                    <div class="header-left">
+                        <div class="header-logo">
+                            <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="16" width="48" height="24" rx="12" fill="white"/>
+                                <rect x="4" y="16" width="24" height="24" rx="12" fill="rgba(255,255,255,0.6)"/>
+                                <path d="M35 24L41 28L35 32" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 32L15 28L21 24" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="25" y="25" width="6" height="2" rx="1" fill="#0F766E" opacity="0.9"/>
+                                <rect x="27" y="23" width="2" height="6" rx="1" fill="#0F766E" opacity="0.9"/>
+                            </svg>
+                        </div>
+                        <div class="header-title">Med<span>Loan</span></div>
+                    </div>
+                    <nav class="header-nav">
+                        <button class="nav-item active">Dashboard</button>
+                        <button class="nav-item">Préstamos</button>
+                        <button class="nav-item">Inventario</button>
+                        <button class="nav-item">Historial</button>
+                    </nav>
+                    <div class="header-actions">
+                        <button class="icon-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                        <button class="icon-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                        </button>
+                        <div class="user-avatar">MG</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GUÍA DE ESTILO -->
+        <div class="two-col">
+            <div>
+                <p class="section-title">Paleta de Colores</p>
+                <div class="asset-card">
+                    <div class="color-palette">
+                        <div class="color-swatch">
+                            <div class="swatch-color" style="background: #0F766E;"></div>
+                            <div class="swatch-name">Primary</div>
+                            <div class="swatch-hex">#0F766E</div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="swatch-color" style="background: #14B8A6;"></div>
+                            <div class="swatch-name">Primary Light</div>
+                            <div class="swatch-hex">#14B8A6</div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="swatch-color" style="background: #F0FDFA;"></div>
+                            <div class="swatch-name">Accent</div>
+                            <div class="swatch-hex">#F0FDFA</div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="swatch-color" style="background: #18181B;"></div>
+                            <div class="swatch-name">Dark</div>
+                            <div class="swatch-hex">#18181B</div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="swatch-color" style="background: #71717A;"></div>
+                            <div class="swatch-name">Secondary</div>
+                            <div class="swatch-hex">#71717A</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <p class="section-title">Tipografía</p>
+                <div class="asset-card">
+                    <div class="typography-showcase">
+                        <div class="type-sample">
+                            <div class="type-label">Heading / Plus Jakarta Sans Bold</div>
+                            <div class="type-heading">Med<span style="color: var(--primary);">Loan</span></div>
+                        </div>
+                        <div class="type-sample">
+                            <div class="type-label">Subheading / Plus Jakarta Sans Semibold</div>
+                            <div class="type-subheading">Gestión de Préstamos</div>
+                        </div>
+                        <div class="type-sample">
+                            <div class="type-label">Body / DM Sans Regular</div>
+                            <div class="type-body">Control integral de préstamos de medicación entre servicios y hospitales.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISTA MÓVIL -->
+        <p class="section-title">Vista Móvil</p>
+        <div class="asset-card" style="text-align: center;">
+            <div class="mobile-frame">
+                <div class="mobile-header">
+                    <div class="mobile-logo">
+                        <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="16" width="48" height="24" rx="12" fill="#0F766E"/>
+                            <rect x="4" y="16" width="24" height="24" rx="12" fill="#14B8A6"/>
+                            <path d="M35 24L41 28L35 32" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 32L15 28L21 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="25" y="25" width="6" height="2" rx="1" fill="white" opacity="0.9"/>
+                            <rect x="27" y="23" width="2" height="6" rx="1" fill="white" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <div class="mobile-title">Med<span>Loan</span></div>
+                </div>
+                <div class="mobile-content">
+                    <div class="mobile-card">
+                        <div class="mobile-card-title">Préstamo Activo #2847</div>
+                        <div class="mobile-card-text">Omeprazol 20mg → H. La Paz</div>
+                        <span class="badge">En tránsito</span>
+                    </div>
+                    <div class="mobile-card">
+                        <div class="mobile-card-title">Solicitud Entrante</div>
+                        <div class="mobile-card-text">Amoxicilina 500mg × 50 uds</div>
+                        <span class="badge" style="background: #FEF3C7; color: #D97706;">Pendiente</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

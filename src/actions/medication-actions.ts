@@ -55,6 +55,7 @@ export async function createMedicationQuick(name: string) {
 
   const existing = await prisma.medication.findFirst({
     where: { name: { equals: trimmed, mode: "insensitive" } },
+    orderBy: { createdAt: "asc" },
   })
 
   if (existing) {
@@ -100,37 +101,43 @@ export async function createMedicationFromCima(nregistro: string) {
   const cn =
     data.presentaciones?.[0]?.cn?.trim() || null
 
-  // Check if already exists by CN
+  // Check if already exists by CN — always update name/details from CIMA (authoritative source)
   if (cn) {
     const existing = await prisma.medication.findFirst({
       where: { nationalCode: cn },
     })
     if (existing) {
-      if (!existing.active) {
-        const reactivated = await prisma.medication.update({
-          where: { id: existing.id },
-          data: { active: true },
-        })
-        revalidatePath("/medicamentos")
-        revalidatePath("/prestamos/nuevo")
-        return reactivated
-      }
-      return existing
+      const updated = await prisma.medication.update({
+        where: { id: existing.id },
+        data: {
+          active: true,
+          name,
+          activeIngredient: activeIngredient ?? existing.activeIngredient,
+          presentation: presentation ?? existing.presentation,
+        },
+      })
+      revalidatePath("/medicamentos")
+      revalidatePath("/prestamos/nuevo")
+      return updated
     }
   }
 
-  // Check by name
+  // Check by name — only if CN is compatible (both null, or one is null, or they match)
   const existingByName = await prisma.medication.findFirst({
     where: { name: { equals: name, mode: "insensitive" } },
+    orderBy: { createdAt: "asc" },
   })
-  if (existingByName) {
+  if (
+    existingByName &&
+    !(cn && existingByName.nationalCode && cn !== existingByName.nationalCode)
+  ) {
     const updated = await prisma.medication.update({
       where: { id: existingByName.id },
       data: {
         active: true,
-        nationalCode: existingByName.nationalCode || cn,
-        activeIngredient: existingByName.activeIngredient || activeIngredient,
-        presentation: existingByName.presentation || presentation,
+        nationalCode: cn ?? existingByName.nationalCode,
+        activeIngredient: activeIngredient ?? existingByName.activeIngredient,
+        presentation: presentation ?? existingByName.presentation,
       },
     })
     revalidatePath("/medicamentos")

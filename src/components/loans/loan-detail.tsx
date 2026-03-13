@@ -21,19 +21,18 @@ import {
   getUnitTypeLabel,
 } from "@/lib/constants"
 import { LoanEditDialog } from "@/components/loans/loan-edit-dialog"
+import { ReturnDialog } from "@/components/loans/return-dialog"
 import { updateLoanNotes, toggleFarmatools, toggleDevuelto } from "@/actions/loan-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import {
-  ArrowLeft,
   FileDown,
   Pencil,
   Check,
   Save,
   Building2,
   Pill,
-  Hash,
   Calendar,
   Mail,
   User,
@@ -41,6 +40,7 @@ import {
   Loader2,
   ChevronRight,
   MousePointerClick,
+  RotateCcw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { LoanWithRelations, Hospital, Medication } from "@/types"
@@ -54,6 +54,7 @@ interface LoanDetailProps {
 export function LoanDetail({ loan, hospitals, medications }: LoanDetailProps) {
   const [notes, setNotes] = useState(loan.notes || "")
   const [editOpen, setEditOpen] = useState(false)
+  const [returnOpen, setReturnOpen] = useState(false)
   const [isSavingNotes, startSaveNotes] = useTransition()
   const [optimisticFarmatools, setOptimisticFarmatools] = useState(loan.farmatoolsGestionado)
   const [optimisticDevuelto, setOptimisticDevuelto] = useState(loan.devuelto)
@@ -152,8 +153,23 @@ export function LoanDetail({ loan, hospitals, medications }: LoanDetailProps) {
                 </Button>
               </Link>
             </TooltipTrigger>
-            <TooltipContent>Descargar PDF</TooltipContent>
+            <TooltipContent>Descargar PDF del préstamo</TooltipContent>
           </Tooltip>
+          {!loan.devuelto && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setReturnOpen(true)}
+                  className="border-green-300 text-green-700 hover:bg-green-50"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Gestionar devolución</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
 
@@ -298,23 +314,40 @@ export function LoanDetail({ loan, hospitals, medications }: LoanDetailProps) {
               <div className="w-full">
                 <p className="text-sm font-medium text-gray-500 mb-2">Medicamentos</p>
                 <div className="space-y-2">
-                  {loan.items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between rounded border p-2">
-                      <div>
-                        <p className="font-medium">{item.medication.name}</p>
-                        {item.medication.activeIngredient && (
-                          <p className="text-sm text-gray-500">{item.medication.activeIngredient}</p>
-                        )}
-                        {item.medication.presentation && (
-                          <p className="text-sm text-gray-500">{item.medication.presentation}</p>
-                        )}
+                  {loan.items.map((item) => {
+                    const returned = item.unitsReturned ?? 0
+                    const pending = item.units - returned
+                    const isFullyReturned = returned >= item.units
+                    return (
+                      <div
+                        key={item.id}
+                        className={`flex items-center justify-between rounded border p-2 ${
+                          isFullyReturned ? "border-green-200 bg-green-50" : ""
+                        }`}
+                      >
+                        <div>
+                          <p className="font-medium">{item.medication.name}</p>
+                          {item.medication.activeIngredient && (
+                            <p className="text-sm text-gray-500">{item.medication.activeIngredient}</p>
+                          )}
+                          {item.medication.presentation && (
+                            <p className="text-sm text-gray-500">{item.medication.presentation}</p>
+                          )}
+                          {returned > 0 && (
+                            <p className={`text-xs mt-1 font-medium ${isFullyReturned ? "text-green-600" : "text-orange-600"}`}>
+                              {isFullyReturned
+                                ? `✓ Devuelto completo (${returned} ${getUnitTypeLabel(item.unitType)})`
+                                : `Devueltas: ${returned} · Pendientes: ${pending} ${getUnitTypeLabel(item.unitType)}`}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold">{item.units}</p>
+                          <p className="text-xs text-gray-500">{getUnitTypeLabel(item.unitType)}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold">{item.units}</p>
-                        <p className="text-xs text-gray-500">{getUnitTypeLabel(item.unitType)}</p>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
                 {loan.items.length > 1 && (() => {
                   const totalByType: Record<string, number> = {}
@@ -435,6 +468,13 @@ export function LoanDetail({ loan, hospitals, medications }: LoanDetailProps) {
         medications={medications}
         open={editOpen}
         onOpenChange={setEditOpen}
+      />
+
+      <ReturnDialog
+        open={returnOpen}
+        onOpenChange={setReturnOpen}
+        loanId={loan.id}
+        items={loan.items}
       />
     </div>
   )

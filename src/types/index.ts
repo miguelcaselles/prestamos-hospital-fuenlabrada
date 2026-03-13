@@ -30,6 +30,7 @@ export type LoanItem = {
   medicationId: string
   units: number
   unitType: UnitType
+  unitsReturned: number
 }
 
 export type LoanItemWithMedication = LoanItem & {

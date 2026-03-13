@@ -716,3 +716,297 @@ export async function generatePendingListPDF(
     doc.end()
   })
 }
+
+// =============================================
+// RETURN / DEVOLUCIÓN PDF
+// =============================================
+
+export interface ReturnItem {
+  loanItemId: string
+  medicationName: string
+  presentation: string | null
+  activeIngredient: string | null
+  unitType: string
+  originalUnits: number
+  alreadyReturned: number
+  unitsToReturn: number
+}
+
+interface ReturnPDFData {
+  referenceNumber: string
+  type: "SOLICITADO" | "PRESTADO"
+  hospitalName: string
+  pharmacistName: string | null
+  returnDate: Date
+  items: ReturnItem[]
+  notes?: string | null
+}
+
+export async function generateReturnPDF(data: ReturnPDFData): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const GREEN = "#16A34A"
+    const GREEN_LIGHT = "#DCFCE7"
+    const ORANGE = "#EA580C"
+    const ORANGE_LIGHT = "#FFF7ED"
+
+    const doc = new PDFDocument({
+      size: "A4",
+      margins: { top: 50, bottom: 30, left: 50, right: 50 },
+      info: {
+        Title: `Devolución ${data.referenceNumber}`,
+        Author: "Hospital Universitario de Fuenlabrada",
+      },
+    })
+
+    const chunks: Buffer[] = []
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk))
+    doc.on("end", () => resolve(Buffer.concat(chunks)))
+    doc.on("error", reject)
+
+    const pageWidth = 595.28
+    const margin = 50
+    const contentWidth = pageWidth - margin * 2
+
+    // --- HEADER ---
+    let y = drawPortraitHeader(doc)
+
+    // --- TITLE ---
+    y += 12
+    doc.roundedRect(margin, y, contentWidth, 36, 4).fill(GREEN)
+    doc
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .fillColor(WHITE)
+      .text("DOCUMENTO DE DEVOLUCIÓN DE MEDICAMENTOS", margin, y + 10, {
+        width: contentWidth,
+        align: "center",
+      })
+
+    // --- REFERENCE & DATE ---
+    y += 50
+    // Type badge
+    const badgeColor = data.type === "SOLICITADO" ? "#7C3AED" : "#0891B2"
+    doc.roundedRect(margin, y, 200, 22, 3).fill(badgeColor)
+    doc
+      .fontSize(9)
+      .font("Helvetica-Bold")
+      .fillColor(WHITE)
+      .text(
+        data.type === "SOLICITADO" ? "NOSOTROS DEVOLVEMOS" : "NOS DEVUELVEN",
+        margin,
+        y + 6,
+        { width: 200, align: "center" }
+      )
+
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor(BLUE_DARK)
+      .text(`Ref: ${data.referenceNumber}`, margin, y + 4, {
+        width: contentWidth,
+        align: "right",
+      })
+
+    y += 30
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .fillColor(GRAY)
+      .text(
+        `Fecha de devolución: ${data.returnDate.toLocaleDateString("es-ES", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })} a las ${data.returnDate.toLocaleTimeString("es-ES", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+        margin,
+        y,
+        { width: contentWidth, align: "right" }
+      )
+
+    // --- INFO ROWS ---
+    y += 28
+    const labelWidth = 150
+    const col2 = margin + labelWidth
+    const valueWidth = contentWidth - labelWidth
+    const rowHeight = 26
+
+    const infoRows: [string, string][] = [
+      ["Hospital", data.hospitalName],
+      ...(data.pharmacistName
+        ? [["Farmacéutico", data.pharmacistName] as [string, string]]
+        : []),
+    ]
+
+    for (let i = 0; i < infoRows.length; i++) {
+      const [label, value] = infoRows[i]
+      const rowY = y + i * rowHeight
+      if (i % 2 === 0) doc.rect(margin, rowY, contentWidth, rowHeight).fill(GRAY_LIGHT)
+      doc
+        .moveTo(margin, rowY + rowHeight)
+        .lineTo(margin + contentWidth, rowY + rowHeight)
+        .strokeColor(GRAY_BORDER)
+        .lineWidth(0.5)
+        .stroke()
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(BLUE_DARK).text(label, margin + 10, rowY + 7, { width: labelWidth - 10 })
+      doc.fontSize(9).font("Helvetica").fillColor(BLACK).text(value, col2, rowY + 7, { width: valueWidth })
+    }
+
+    y += infoRows.length * rowHeight + 20
+    doc.lineWidth(1)
+
+    // --- MEDICATIONS TABLE ---
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(BLUE_DARK).text("Medicamentos a devolver", margin, y)
+    y += 18
+
+    const colWidths = {
+      med: 160,
+      pres: 90,
+      act: 80,
+      orig: 55,
+      prev: 55,
+      now: 55,
+      rem: contentWidth - 160 - 90 - 80 - 55 - 55 - 55,
+    }
+    const headers = [
+      { label: "Medicamento", w: colWidths.med },
+      { label: "Presentación", w: colWidths.pres },
+      { label: "P. Activo", w: colWidths.act },
+      { label: "Prestadas", w: colWidths.orig },
+      { label: "Ya devuel.", w: colWidths.prev },
+      { label: "Devuelve", w: colWidths.now },
+      { label: "Pendiente", w: colWidths.rem },
+    ]
+
+    // Header row
+    doc.roundedRect(margin, y, contentWidth, 22, 3).fill(GREEN)
+    doc.fontSize(7.5).font("Helvetica-Bold").fillColor(WHITE)
+    let hx = margin
+    for (const h of headers) {
+      doc.text(h.label, hx + 4, y + 6, { width: h.w - 8, align: "center" })
+      hx += h.w
+    }
+    y += 24
+
+    let totalOriginal = 0
+    let totalAlready = 0
+    let totalNow = 0
+    let totalRemaining = 0
+
+    for (let i = 0; i < data.items.length; i++) {
+      const item = data.items[i]
+      const remaining = item.originalUnits - item.alreadyReturned - item.unitsToReturn
+      const unitLabel = getUnitTypeLabel(item.unitType)
+
+      totalOriginal += item.originalUnits
+      totalAlready += item.alreadyReturned
+      totalNow += item.unitsToReturn
+      totalRemaining += Math.max(0, remaining)
+
+      if (i % 2 === 0) doc.rect(margin, y, contentWidth, rowHeight).fill(GRAY_LIGHT)
+      doc
+        .moveTo(margin, y + rowHeight)
+        .lineTo(margin + contentWidth, y + rowHeight)
+        .strokeColor(GRAY_BORDER)
+        .lineWidth(0.3)
+        .stroke()
+
+      let rx = margin
+      doc.fontSize(8).font("Helvetica").fillColor(BLACK)
+      doc.text(item.medicationName, rx + 4, y + 7, { width: colWidths.med - 8 })
+      rx += colWidths.med
+      doc.text(item.presentation || "—", rx + 4, y + 7, { width: colWidths.pres - 8 })
+      rx += colWidths.pres
+      doc.text(item.activeIngredient || "—", rx + 4, y + 7, { width: colWidths.act - 8 })
+      rx += colWidths.act
+
+      // Prestadas
+      doc.fontSize(8).font("Helvetica-Bold").fillColor(BLACK)
+      doc.text(`${item.originalUnits} ${unitLabel}`, rx + 4, y + 7, { width: colWidths.orig - 8, align: "center" })
+      rx += colWidths.orig
+
+      // Ya devueltas
+      doc.fillColor(item.alreadyReturned > 0 ? GREEN : GRAY)
+      doc.text(`${item.alreadyReturned} ${unitLabel}`, rx + 4, y + 7, { width: colWidths.prev - 8, align: "center" })
+      rx += colWidths.prev
+
+      // Devuelve ahora
+      doc.fillColor(GREEN)
+      doc.text(`${item.unitsToReturn} ${unitLabel}`, rx + 4, y + 7, { width: colWidths.now - 8, align: "center" })
+      rx += colWidths.now
+
+      // Pendiente
+      const rem = Math.max(0, remaining)
+      doc.fillColor(rem > 0 ? ORANGE : GREEN)
+      doc.text(`${rem} ${unitLabel}`, rx + 4, y + 7, { width: colWidths.rem - 8, align: "center" })
+
+      y += rowHeight
+      doc.lineWidth(1)
+    }
+
+    // Totals row
+    doc.roundedRect(margin, y + 2, contentWidth, 22, 3).fill(GREEN_LIGHT)
+    let tx = margin
+    doc.fontSize(8.5).font("Helvetica-Bold")
+    doc.fillColor(BLUE_DARK).text("TOTAL", tx + 4, y + 8, { width: colWidths.med - 8 })
+    tx += colWidths.med + colWidths.pres + colWidths.act
+    doc.fillColor(BLACK).text(`${totalOriginal}`, tx + 4, y + 8, { width: colWidths.orig - 8, align: "center" })
+    tx += colWidths.orig
+    doc.fillColor(GREEN).text(`${totalAlready}`, tx + 4, y + 8, { width: colWidths.prev - 8, align: "center" })
+    tx += colWidths.prev
+    doc.fillColor(GREEN).text(`${totalNow}`, tx + 4, y + 8, { width: colWidths.now - 8, align: "center" })
+    tx += colWidths.now
+    doc.fillColor(totalRemaining > 0 ? ORANGE : GREEN).text(`${totalRemaining}`, tx + 4, y + 8, { width: colWidths.rem - 8, align: "center" })
+
+    y += 32
+
+    // Status banner
+    if (totalRemaining === 0) {
+      doc.roundedRect(margin, y, contentWidth, 22, 4).fill(GREEN_LIGHT)
+      doc
+        .fontSize(9)
+        .font("Helvetica-Bold")
+        .fillColor(GREEN)
+        .text("✓  PRÉSTAMO COMPLETAMENTE DEVUELTO", margin, y + 6, { width: contentWidth, align: "center" })
+    } else {
+      doc.roundedRect(margin, y, contentWidth, 22, 4).fill(ORANGE_LIGHT)
+      doc
+        .fontSize(9)
+        .font("Helvetica-Bold")
+        .fillColor(ORANGE)
+        .text(`⚠  Quedan ${totalRemaining} unidades pendientes de devolver`, margin, y + 6, { width: contentWidth, align: "center" })
+    }
+    y += 32
+
+    // --- NOTES ---
+    if (data.notes) {
+      doc.roundedRect(margin, y, contentWidth, 20, 3).fill(BLUE_LIGHT)
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(BLUE_DARK).text("Observaciones", margin + 10, y + 5)
+      y += 24
+      doc.fontSize(9).font("Helvetica").fillColor(BLACK).text(data.notes, margin + 10, y, { width: contentWidth - 20 })
+      y = doc.y + 10
+    }
+
+    // --- SIGNATURES ---
+    const sigY = Math.max(y + 50, 560)
+    const sigWidth = (contentWidth - 40) / 2
+
+    doc.moveTo(margin, sigY).lineTo(margin + sigWidth, sigY).strokeColor(GRAY_BORDER).stroke()
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .fillColor(GRAY)
+      .text("Firma Farmacia Solicitante", margin, sigY + 6, { width: sigWidth, align: "center", lineBreak: false })
+
+    const rightSigX = pageWidth - margin - sigWidth
+    doc.moveTo(rightSigX, sigY).lineTo(pageWidth - margin, sigY).strokeColor(GRAY_BORDER).stroke()
+    doc.text("Firma Farmacia Prestadora", rightSigX, sigY + 6, { width: sigWidth, align: "center", lineBreak: false })
+
+    // --- FOOTER ---
+    drawFooter(doc, pageWidth, 841.89, margin)
+
+    doc.end()
+  })
+}

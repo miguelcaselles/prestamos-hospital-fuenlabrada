@@ -73,13 +73,14 @@ model Loan {
 }
 
 model LoanItem {
-  id           String     @id @default(cuid())
-  loanId       String     @map("loan_id")
-  loan         Loan       @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  medicationId String     @map("medication_id")
-  medication   Medication @relation(fields: [medicationId], references: [id])
-  units        Int
-  unitType     UnitType   @default(UNIDADES) @map("unit_type")
+  id            String     @id @default(cuid())
+  loanId        String     @map("loan_id")
+  loan          Loan       @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  medicationId  String     @map("medication_id")
+  medication    Medication @relation(fields: [medicationId], references: [id])
+  units         Int
+  unitType      UnitType   @default(UNIDADES) @map("unit_type")
+  unitsReturned Int        @default(0) @map("units_returned")
 
   @@index([loanId])
   @@index([medicationId])
