@@ -27,8 +27,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { CheckCircle2, FileDown } from "lucide-react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { CheckCircle2, FileDown, RotateCcw } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ReturnDialog } from "@/components/loans/return-dialog"
 import type { LoanWithRelations, Hospital } from "@/types"
 
 interface PendingTableProps {
@@ -43,6 +49,7 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>("all")
   const [selectedLoanIds, setSelectedLoanIds] = useState<string[]>([])
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [returnLoan, setReturnLoan] = useState<LoanWithRelations | null>(null)
 
   const filteredLoans =
     selectedHospitalId === "all"
@@ -208,6 +215,36 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
         />
       ),
     },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        const loan = row.original
+        const hasReturnableItems = loan.items.some(
+          (i) => (i.unitsReturned ?? 0) < i.units
+        )
+        if (!hasReturnableItems) return null
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-green-300 text-green-700 hover:bg-green-50"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setReturnLoan(loan)
+                }}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Gestionar devolución</TooltipContent>
+          </Tooltip>
+        )
+      },
+      enableSorting: false,
+    },
   ]
 
   // Get unique hospitals from the loans
@@ -283,6 +320,15 @@ export function PendingTable({ loans, hospitals, listType }: PendingTableProps) 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {returnLoan && (
+        <ReturnDialog
+          open={!!returnLoan}
+          onOpenChange={(open) => { if (!open) setReturnLoan(null) }}
+          loanId={returnLoan.id}
+          items={returnLoan.items}
+        />
+      )}
     </div>
   )
 }
