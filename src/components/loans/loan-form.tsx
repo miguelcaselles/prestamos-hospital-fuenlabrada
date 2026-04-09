@@ -235,12 +235,15 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
         <div className="space-y-3">
           <FormLabel className="text-base font-semibold">Medicamentos</FormLabel>
           {fields.map((field, index) => (
-            <div key={field.id} className="flex gap-3 items-start">
+            <div
+              key={field.id}
+              className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 space-y-2"
+            >
               <FormField
                 control={form.control}
                 name={`items.${index}.medicationId`}
                 render={({ field: medField }) => (
-                  <FormItem className="flex-1">
+                  <FormItem>
                     <FormControl>
                       <MedicationSearch
                         medications={localMedications}
@@ -254,56 +257,58 @@ export function LoanForm({ hospitals, medications }: LoanFormProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name={`items.${index}.units`}
-                render={({ field: unitsField }) => (
-                  <FormItem className="w-24">
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        placeholder="Cant."
-                        {...unitsField}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name={`items.${index}.unitType`}
-                render={({ field: unitTypeField }) => (
-                  <FormItem className="w-28">
-                    <Select
-                      value={unitTypeField.value}
-                      onValueChange={unitTypeField.onChange}
-                    >
+              <div className="flex items-center gap-2">
+                <FormField
+                  control={form.control}
+                  name={`items.${index}.units`}
+                  render={({ field: unitsField }) => (
+                    <FormItem className="flex-1">
                       <FormControl>
-                        <SelectTrigger size="sm">
-                          <SelectValue />
-                        </SelectTrigger>
+                        <Input
+                          type="number"
+                          min={1}
+                          placeholder="Cantidad"
+                          {...unitsField}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="UNIDADES">Uds.</SelectItem>
-                        <SelectItem value="CAJAS">Cajas</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`items.${index}.unitType`}
+                  render={({ field: unitTypeField }) => (
+                    <FormItem className="w-32 shrink-0">
+                      <Select
+                        value={unitTypeField.value}
+                        onValueChange={unitTypeField.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="UNIDADES">Unidades</SelectItem>
+                          <SelectItem value="CAJAS">Cajas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                {fields.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={() => remove(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 )}
-              />
-              {fields.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="mt-0.5 shrink-0"
-                  onClick={() => remove(index)}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
-              )}
+              </div>
             </div>
           ))}
           {isCreatingMed && (
