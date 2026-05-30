@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -42,6 +43,7 @@ export default function RootLayout({
       <body className={`${plusJakarta.variable} font-sans antialiased`}>
         {children}
         <Toaster richColors position="top-right" />
+        <Analytics />
       </body>
     </html>
   )
